@@ -1,237 +1,324 @@
 <!doctype html>
 <html lang="ru">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Учебник n8n · Telegram Mini App</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    :root {
-      --bg: #ffffff;
-      --text: #111111;
-      --muted: #666666;
-      --card: #f3f4f6;
-      --accent: #0a84ff;
-      --accent-contrast: #ffffff;
-      --border: #e5e7eb;
-      --radius: 16px;
-    }
-    * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"; }
-    .container { max-width: 900px; margin: 0 auto; padding: 16px; }
-    header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0 16px; }
-    h1 { font-size: 20px; margin: 0; }
-    .pill { font-size: 12px; color: var(--muted); }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
-    .card h3 { margin: 0; font-size: 16px; }
-    .btn { background: var(--accent); color: var(--accent-contrast); border: none; padding: 10px 14px; border-radius: 999px; font-weight: 600; cursor: pointer; }
-    .btn.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
-    .lesson { display: none; }
-    .lesson.active { display: block; }
-    .lesson h2 { margin-top: 0; }
-    .muted { color: var(--muted); }
-    .list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
-    .opt { border: 1px solid var(--border); border-radius: 12px; padding: 10px; cursor: pointer; background: #fff; }
-    .opt.selected { outline: 2px solid var(--accent); }
-    .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: 16px; background: #111; color: #fff; padding: 10px 14px; border-radius: 10px; font-size: 13px; display: none; }
-    footer { padding: 24px 0 56px; text-align: center; color: var(--muted); font-size: 12px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <h1>Учебник по n8n</h1>
-      <span class="pill" id="username"></span>
-    </header>
-
-    <section id="catalog">
-      <div id="lessons" class="grid"></div>
-    </section>
-
-    <section id="lessonView" class="lesson">
-      <button class="btn secondary" id="backBtn">← Назад к урокам</button>
-      <h2 id="lessonTitle"></h2>
-      <p class="muted" id="lessonSummary"></p>
-      <article id="lessonContent"></article>
-
-      <div id="quiz" style="margin-top:16px;">
-        <h3>Мини‑тест</h3>
-        <div id="quizQuestion" class="muted" style="margin-bottom:8px;"></div>
-        <ul id="quizOptions" class="list"></ul>
-        <button class="btn" id="submitAnswer" disabled>Отправить ответ</button>
-        <div id="quizResult" style="margin-top:10px;"></div>
-      </div>
-    </section>
-
-    <footer>Telegram Mini App · пример фронтенда. Бэкенд — n8n Webhook API.</footer>
-  </div>
-
-  <div id="toast" class="toast"></div>
-
-  <script>
-    // ====== Config ======
-    const API_BASE = "https://YOUR_N8N_DOMAIN/webhook"; // <-- замените на ваш домен n8n
-    const ORIGIN = window.location.origin;
-
-    // ====== Telegram SDK ======
-    const tg = window.Telegram?.WebApp;
-    if (tg) {
-      tg.expand();
-      tg.ready();
-      // Установка темы
-      const tp = tg.themeParams || {};
-      const isDark = tg.colorScheme === "dark";
-      const setVar = (k, v) => document.documentElement.style.setProperty(k, v);
-      setVar("--bg", tp.bg_color || (isDark ? "#0f0f10" : "#ffffff"));
-      setVar("--text", tp.text_color || (isDark ? "#f2f2f7" : "#111111"));
-      setVar("--muted", tp.hint_color || (isDark ? "#9aa0a6" : "#666666"));
-      setVar("--card", tp.secondary_bg_color || (isDark ? "#1b1c1d" : "#f3f4f6"));
-      setVar("--accent", tp.button_color || "#0a84ff");
-      setVar("--accent-contrast", tp.button_text_color || "#ffffff");
-      setVar("--border", isDark ? "#2b2c2e" : "#e5e7eb");
-      // UI
-      tg.BackButton.onClick(() => showCatalog());
-    }
-
-    // ====== State ======
-    let LESSONS = [];
-    let currentLesson = null;
-    let selectedIndex = null;
-
-    const els = {
-      username: document.getElementById("username"),
-      lessons: document.getElementById("lessons"),
-      catalog: document.getElementById("catalog"),
-      view: document.getElementById("lessonView"),
-      back: document.getElementById("backBtn"),
-      title: document.getElementById("lessonTitle"),
-      summary: document.getElementById("lessonSummary"),
-      content: document.getElementById("lessonContent"),
-      quizQ: document.getElementById("quizQuestion"),
-      quizOpts: document.getElementById("quizOptions"),
-      submit: document.getElementById("submitAnswer"),
-      quizResult: document.getElementById("quizResult"),
-      toast: document.getElementById("toast"),
-    };
-
-    function toast(msg) {
-      els.toast.textContent = msg;
-      els.toast.style.display = "block";
-      setTimeout(() => els.toast.style.display = "none", 1800);
-    }
-
-    function showCatalog() {
-      els.view.classList.remove("active");
-      els.catalog.style.display = "block";
-      tg?.BackButton.hide();
-      if (tg?.MainButton?.isVisible) tg.MainButton.hide();
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-
-    function showLesson(lesson) {
-      currentLesson = lesson;
-      selectedIndex = null;
-      els.catalog.style.display = "none";
-      els.view.classList.add("active");
-      els.title.textContent = lesson.title;
-      els.summary.textContent = lesson.summary || "";
-      els.content.innerHTML = lesson.content_html || "";
-      els.quizQ.textContent = (lesson.quiz && lesson.quiz.question) ? lesson.quiz.question : "В этом уроке нет теста.";
-      els.quizOpts.innerHTML = "";
-      els.quizResult.textContent = "";
-      els.submit.disabled = true;
-
-      if (lesson.quiz && Array.isArray(lesson.quiz.options)) {
-        lesson.quiz.options.forEach((opt, i) => {
-          const li = document.createElement("li");
-          li.className = "opt";
-          li.textContent = opt;
-          li.addEventListener("click", () => {
-            selectedIndex = i;
-            [...els.quizOpts.children].forEach(el => el.classList.remove("selected"));
-            li.classList.add("selected");
-            els.submit.disabled = false;
-            if (tg?.MainButton) {
-              tg.MainButton.setText("Отправить ответ");
-              tg.MainButton.show();
-              tg.MainButton.onClick(() => submitAnswer());
+    <head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <title>База знаний AllTime · Telegram Mini App</title>
+        <script src="https://telegram.org/js/telegram-web-app.js"></script>
+        <style>
+            :root {
+                --bg: #fff;
+                --text: #111;
+                --muted: #666;
+                --card: #f3f4f6;
+                --accent: #0a84ff;
+                --accent-contrast: #fff;
+                --border: #e5e7eb;
+                --radius: 14px
             }
-          });
-          els.quizOpts.appendChild(li);
-        });
-      } else {
-        els.quizOpts.innerHTML = "<li class='muted'>Нет вариантов ответа.</li>";
-      }
-      tg?.BackButton.show();
-    }
 
-    async function authorizedFetch(url, options = {}) {
-      const initData = tg?.initData || "";
-      const headers = Object.assign({}, options.headers || {}, {
-        "Content-Type": "application/json",
-        "X-Init-Data": initData,
-        "X-App-Origin": ORIGIN
-      });
-      const res = await fetch(url, { ...options, headers });
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`HTTP ${res.status}: ${txt}`);
-      }
-      return res.json();
-    }
+            * {
+                box-sizing: border-box
+            }
 
-    async function loadLessons() {
-      try {
-        const data = await authorizedFetch(`${API_BASE}/edu/lessons`);
-        LESSONS = data.lessons || [];
-        renderLessons();
-        const user = data.user || {};
-        els.username.textContent = user.first_name ? `${user.first_name} ${user.last_name || ""}`.trim() : "";
-      } catch (e) {
-        console.error(e);
-        toast("Ошибка загрузки уроков");
-      }
-    }
+            html,body {
+                margin: 0;
+                padding: 0;
+                background: var(--bg);
+                color: var(--text);
+                font-family: Inter,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial
+            }
 
-    function renderLessons() {
-      els.lessons.innerHTML = "";
-      LESSONS.forEach(lesson => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <h3>${lesson.title}</h3>
-          <p class="muted">${lesson.summary || ""}</p>
-          <button class="btn">Открыть</button>
-        `;
-        card.querySelector("button").addEventListener("click", () => showLesson(lesson));
-        els.lessons.appendChild(card);
-      });
-    }
+            .wrap {
+                max-width: 1100px;
+                margin: 0 auto;
+                padding: 12px
+            }
 
-    async function submitAnswer() {
-      if (selectedIndex == null || !currentLesson) return;
-      try {
-        const payload = { lessonId: currentLesson.id, answerIndex: selectedIndex };
-        const data = await authorizedFetch(`${API_BASE}/edu/progress`, {
-          method: "POST",
-          body: JSON.stringify(payload)
-        });
-        els.quizResult.textContent = data.correct ? "Верно! 🎉" : `Неверно. ${data.explain || ""}`;
-        tg?.HapticFeedback?.notificationOccurred(data.correct ? "success" : "error");
-        tg?.MainButton?.hide();
-      } catch (e) {
-        console.error(e);
-        toast("Не удалось отправить ответ");
-      }
-    }
+            header {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                justify-content: space-between;
+                padding: 8px 0 12px
+            }
 
-    els.back.addEventListener("click", showCatalog);
-    els.submit.addEventListener("click", submitAnswer);
+            h1 {
+                margin: 0;
+                font-size: 20px
+            }
 
-    // Boot
-    showCatalog();
-    loadLessons();
-  </script>
-</body>
+            #search {
+                display: flex;
+                gap: 8px;
+                width: 100%;
+                max-width: 520px
+            }
+
+            #q {
+                flex: 1;
+                padding: 10px 12px;
+                border-radius: 999px;
+                border: 1px solid var(--border);
+                background: var(--card)
+            }
+
+            .btn {
+                background: var(--accent);
+                color: var(--accent-contrast);
+                border: none;
+                padding: 10px 14px;
+                border-radius: 999px;
+                font-weight: 600;
+                cursor: pointer
+            }
+
+            .layout {
+                display: grid;
+                grid-template-columns: 260px 1fr;
+                gap: 12px
+            }
+
+            @media(max-width: 860px) {
+                .layout {
+                    grid-template-columns:1fr
+                }
+            }
+
+            .panel {
+                background: var(--card);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 12px
+            }
+
+            .tree {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                display: flex;
+                flex-direction: column;
+                gap: 4px
+            }
+
+            .node {
+                padding: 8px 10px;
+                border-radius: 10px;
+                cursor: pointer
+            }
+
+            .node.active {
+                outline: 2px solid var(--accent);
+                background: #fff
+            }
+
+            .list {
+                display: grid;
+                grid-template-columns: repeat(auto-fill,minmax(240px,1fr));
+                gap: 10px
+            }
+
+            .card {
+                border: 1px solid var(--border);
+                background: #fff;
+                border-radius: var(--radius);
+                padding: 12px;
+                display: flex;
+                flex-direction: column;
+                gap: 8px
+            }
+
+            .card h3 {
+                margin: 0;
+                font-size: 16px
+            }
+
+            .muted {
+                color: var(--muted)
+            }
+
+            article h2 {
+                margin-top: 0
+            }
+
+            footer {
+                padding: 20px 0 56px;
+                text-align: center;
+                color: var(--muted);
+                font-size: 12px
+            }
+
+            .toast {
+                position: fixed;
+                left: 50%;
+                transform: translateX(-50%);
+                bottom: 16px;
+                background: #111;
+                color: #fff;
+                padding: 10px 14px;
+                border-radius: 10px;
+                font-size: 13px;
+                display: none
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <header>
+                <h1>База знаний AllTime</h1>
+                <form id="search" onsubmit="return false;">
+                    <input id="q" type="search" placeholder="Поиск статей (например, водонепроницаемость)"/>
+                    <button class="btn" id="findBtn">Найти</button>
+                </form>
+            </header>
+            <div class="layout">
+                <aside class="panel">
+                    <ul id="tree" class="tree"></ul>
+                </aside>
+                <main>
+                    <section id="list" class="list"></section>
+                    <section id="article" class="panel" style="display:none;">
+                        <button class="btn" id="backBtn">← К списку</button>
+                        <article>
+                            <h2 id="aTitle"></h2>
+                            <p class="muted" id="aSummary"></p>
+                            <div id="aBody"></div>
+                        </article>
+                    </section>
+                </main>
+            </div>
+            <footer>Мини‑приложение Telegram. Бэкенд — n8n Webhook API.</footer>
+        </div>
+        <div id="toast" class="toast"></div>
+        <script>
+            const API_BASE = 'https://YOUR_N8N_DOMAIN/webhook';
+            const tg = window.Telegram?.WebApp;
+            if (tg) {
+                tg.expand();
+                tg.ready();
+                const tp = tg.themeParams || {};
+                const isDark = tg.colorScheme === 'dark';
+                const setVar = (k, v) => document.documentElement.style.setProperty(k, v);
+                setVar('--bg', tp.bg_color || (isDark ? '#0f0f10' : '#ffffff'));
+                setVar('--text', tp.text_color || (isDark ? '#f2f2f7' : '#111111'));
+                setVar('--muted', tp.hint_color || (isDark ? '#9aa0a6' : '#666666'));
+                setVar('--card', tp.secondary_bg_color || (isDark ? '#1b1c1d' : '#f3f4f6'));
+                setVar('--accent', tp.button_color || '#0a84ff');
+                setVar('--accent-contrast', tp.button_text_color || '#ffffff');
+                setVar('--border', isDark ? '#2b2c2e' : '#e5e7eb')
+            }
+            const els = {
+                tree: document.getElementById('tree'),
+                list: document.getElementById('list'),
+                article: document.getElementById('article'),
+                aTitle: document.getElementById('aTitle'),
+                aSummary: document.getElementById('aSummary'),
+                aBody: document.getElementById('aBody'),
+                backBtn: document.getElementById('backBtn'),
+                q: document.getElementById('q'),
+                findBtn: document.getElementById('findBtn'),
+                toast: document.getElementById('toast'),
+            };
+            function toast(msg) {
+                els.toast.textContent = msg;
+                els.toast.style.display = 'block';
+                setTimeout( () => els.toast.style.display = 'none', 1800)
+            }
+            function nodeTpl(item, level=0) {
+                const li = document.createElement('li');
+                li.innerHTML = `<div class="node" data-id="${item.id}" style="padding-left:${6 + level * 12}px">${item.title}</div>`;
+                if (item.children?.length) {
+                    const ul = document.createElement('ul');
+                    ul.className = 'tree';
+                    item.children.forEach(ch => ul.appendChild(nodeTpl(ch, level + 1)));
+                    li.appendChild(ul)
+                }
+                return li
+            }
+            function showList(items) {
+                els.article.style.display = 'none';
+                els.list.innerHTML = '';
+                if (!items.length) {
+                    els.list.innerHTML = '<div class="panel">Ничего не найдено</div>';
+                    return
+                }
+                items.forEach(it => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `<h3>${it.title}</h3><p class="muted">${it.summary || ''}</p><button class="btn">Открыть</button>`;
+                    card.querySelector('button').addEventListener('click', () => openArticle(it.id));
+                    els.list.appendChild(card)
+                }
+                );
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                })
+            }
+            function setActiveNode(id) {
+                document.querySelectorAll('.node').forEach(n => n.classList.toggle('active', n.dataset.id === id))
+            }
+            async function authorizedFetch(url, options={}) {
+                const initData = tg?.initData || '';
+                const headers = Object.assign({}, options.headers || {}, {
+                    "Content-Type": "application/json",
+                    "X-Init-Data": initData
+                });
+                const res = await fetch(url, {
+                    ...options,
+                    headers
+                });
+                if (!res.ok) {
+                    const t = await res.text();
+                    throw new Error(`HTTP ${res.status}: ${t}`)
+                }
+                return res.json()
+            }
+            async function loadTree() {
+                const data = await authorizedFetch(`${API_BASE}/kb/categories`);
+                els.tree.innerHTML = '';
+                data.tree.forEach(item => els.tree.appendChild(nodeTpl(item)));
+                els.tree.querySelectorAll('.node').forEach(n => n.addEventListener('click', () => {
+                    const id = n.dataset.id;
+                    setActiveNode(id);
+                    loadList(id)
+                }
+                ));
+                if (data.tree[0]) {
+                    setActiveNode(data.tree[0].id);
+                    loadList(data.tree[0].id)
+                }
+            }
+            async function loadList(categoryId, q='') {
+                const data = await authorizedFetch(`${API_BASE}/kb/articles?category=${encodeURIComponent(categoryId)}&q=${encodeURIComponent(q)}`);
+                showList(data.items || [])
+            }
+            async function openArticle(id) {
+                const data = await authorizedFetch(`${API_BASE}/kb/article?id=${encodeURIComponent(id)}`);
+                const a = data.article;
+                els.aTitle.textContent = a.title;
+                els.aSummary.textContent = a.summary || '';
+                els.aBody.innerHTML = a.content_html || '';
+                els.article.style.display = 'block';
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                })
+            }
+            els.findBtn.addEventListener('click', () => {
+                const term = (els.q.value || '').trim();
+                loadList('', term)
+            }
+            );
+            els.backBtn.addEventListener('click', () => {
+                els.article.style.display = 'none'
+            }
+            );
+            loadTree().catch(e => {
+                console.error(e);
+                toast('Ошибка загрузки')
+            }
+            );
+        </script>
+    </body>
 </html>
