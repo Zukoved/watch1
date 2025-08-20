@@ -277,7 +277,10 @@
 
   function bindTabs(){
     tabs = Array.from(document.querySelectorAll('.tabbar .tab'));
-
+    // навешиваем обработчики клика на каждую вкладку
+    tabs.forEach(t => {
+      t.addEventListener('click', () => setTab(t.dataset.tab));
+    });
   }
   document.addEventListener('DOMContentLoaded', bindTabs);
 
