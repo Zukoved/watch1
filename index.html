@@ -1,389 +1,363 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>База знаний AllTime · Telegram Mini App</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>База знаний · Demo Web App</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root{
-      --bg:#0f1115;
-      --card:#151922;
-      --muted:#94a3b8;
-      --text:#e5e7eb;
-      --brand:#60a5fa;
-      --accent:#22d3ee;
-      --border:#263041;
-      --radius:16px;
-      --shadow:0 10px 25px rgba(0,0,0,.35);
+      --bg: #0f1117;         /* фон */
+      --card: #161a23;       /* карточки */
+      --muted: #94a3b8;      /* вторичный текст */
+      --text: #e5e7eb;       /* основной текст */
+      --brand: #60a5fa;      /* синий */
+      --accent: #22d3ee;     /* бирюзовый */
+      --ok: #10b981;         /* зелёный */
+      --border: #232838;     /* рамка */
+      --shadow: 0 10px 25px rgba(0,0,0,.35);
+      --radius: 16px;
     }
     *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:15px/1.5 Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial}
-    .wrap{max-width:1180px;margin:0 auto;padding:16px}
-    header{display:flex;align-items:center;gap:14px;justify-content:space-between;margin-bottom:14px}
-    h1{margin:0;font-size:20px;letter-spacing:.2px}
-    .brand{display:flex;align-items:center;gap:10px}
-    .brand .logo{width:28px;height:28px;border-radius:10px;background:linear-gradient(135deg,var(--brand),var(--accent));display:grid;place-items:center;box-shadow:var(--shadow)}
-    .brand .logo svg{width:18px;height:18px;color:#0b1220}
-    .search{display:flex;align-items:center;gap:8px;width:100%;max-width:560px}
-    .search input{flex:1;min-width:0;padding:12px 14px;border-radius:999px;background:var(--card);border:1px solid var(--border);color:var(--text);outline:none}
-    .btn{border:0;border-radius:999px;background:var(--brand);color:#0b1220;font-weight:700;padding:12px 16px;cursor:pointer}
-    .layout{display:grid;grid-template-columns:280px 1fr;gap:14px}
-    @media (max-width:900px){.layout{grid-template-columns:1fr}}
-    .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
-    .tree{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:68vh;overflow:auto}
-    .node{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;cursor:pointer;transition:all .15s ease}
-    .node:hover{background:#0b1220}
-    .node.active{background:#0b1220;outline:2px solid var(--brand)}
-    .node .ico{width:16px;height:16px;opacity:.85}
-    .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
-    .card{background:#0b1220;border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow)}
-    .card h3{margin:0 0 2px 0;font-size:16px}
-    .badge{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:999px;padding:6px 10px;color:var(--muted);font-size:12px}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial}
+
+    .wrap{max-width:840px;margin:0 auto;padding:16px 16px calc(80px + env(safe-area-inset-bottom));}
+    header{position:sticky;top:0;background:linear-gradient(180deg,rgba(15,17,23,1),rgba(15,17,23,.85));backdrop-filter:saturate(1.2) blur(6px);z-index:20;border-bottom:1px solid var(--border)}
+    header .row{max-width:840px;margin:0 auto;padding:12px 16px;display:flex;gap:12px;align-items:center}
+    .logo{display:flex;gap:10px;align-items:center}
+    .logo i{width:22px;height:22px;display:inline-grid;place-items:center;border-radius:10px;background:linear-gradient(135deg,var(--brand),var(--accent));box-shadow:inset 0 0 18px rgba(255,255,255,.2)}
+    .logo b{font-weight:700}
+
+    .view{display:none}
+    .view.active{display:block}
+
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    @media (min-width:720px){ .grid{grid-template-columns:repeat(3,minmax(0,1fr))} }
+
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px;box-shadow:var(--shadow)}
+    .card.click{cursor:pointer;transition:transform .15s ease, border-color .15s ease}
+    .card.click:hover{transform:translateY(-2px);border-color:var(--brand)}
+
     .muted{color:var(--muted)}
-    .toolbar{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-    .crumbs{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);margin-bottom:10px}
+    .badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#d1fae5;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.35);padding:3px 8px;border-radius:999px}
+
+    .list{display:flex;flex-direction:column;gap:8px}
+    .item{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:12px;background:var(--card);border:1px solid var(--border);cursor:pointer;transition:transform .15s ease,border-color .15s ease}
+    .item:hover{transform:translateY(-1px);border-color:var(--brand)}
+    .item .ico{width:20px;opacity:.9;margin-top:2px}
+    .item h4{margin:0 0 4px 0;font-size:15px}
+    .item .meta{font-size:12px;color:var(--muted)}
+
+    .crumbs{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:13px;margin:4px 0 12px}
+    .crumbs a{color:var(--muted);text-decoration:none}
     .crumbs .sep{opacity:.5}
-    .article{display:none}
-    .article h2{margin:0 0 6px 0}
-    .article .back{margin-bottom:12px}
-    footer{padding:24px 0 60px;text-align:center;color:var(--muted);font-size:12px}
-    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#0b1220;color:var(--text);padding:10px 14px;border-radius:12px;border:1px solid var(--border);display:none;box-shadow:var(--shadow)}
-    .hint{font-size:12px;color:var(--muted)}
-    /* Bottom tab bar */
-    .tabbar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--border);padding:8px calc(env(safe-area-inset-right) + 12px) calc(env(safe-area-inset-bottom) + 8px) calc(env(safe-area-inset-left) + 12px);z-index:50}
-    .tabbar .row{display:flex;max-width:820px;margin:0 auto;gap:8px;justify-content:space-between}
-    .tabbar .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px;border-radius:12px;color:var(--muted);background:transparent;border:0;cursor:pointer}
-    .tabbar .tab .ico{width:18px;height:18px;opacity:.95}
-    .tabbar .tab .label{font-size:12px;line-height:1;white-space:nowrap}
-    .tabbar .row{justify-content:space-around}
-    body{padding-bottom:84px}
+
+    .back{display:inline-flex;gap:8px;align-items:center;padding:8px 10px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--text);cursor:pointer}
+
+    .article{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+    .article h2{margin:0 0 4px}
+    .article .meta{color:var(--muted);font-size:12px;margin-bottom:12px}
+    .article .content{line-height:1.6}
+    .article .content h2,.article .content h3{margin-top:18px}
+    .article .content p{margin:10px 0}
+    .article .content a{color:var(--brand)}
+
+    /* таббар */
+    .tabbar{position:fixed;left:0;right:0;bottom:0;background:rgba(16,18,24,.9);backdrop-filter:saturate(1.2) blur(6px);border-top:1px solid var(--border);padding:10px calc(env(safe-area-inset-left) + 8px) calc(env(safe-area-inset-bottom) + 10px);z-index:30}
+    .tabbar .row{max-width:840px;margin:0 auto;display:flex;gap:8px;justify-content:space-between}
+    .tab{flex:1;display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:center;color:var(--muted);background:transparent;border:0;cursor:pointer;padding:6px 8px;border-radius:12px}
+    .tab.active{color:var(--text);background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.35)}
+    .tab .ico{width:18px;height:18px;opacity:.95}
+    .tab .label{font-size:12px}
+
+    .search{display:flex;gap:10px;margin:6px 0 14px}
+    .search input{flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:12px}
   </style>
 </head>
 <body>
-<div class="wrap">
   <header>
-    <div class="brand">
-      <div class="logo" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 7a5 5 0 100 10 5 5 0 000-10zm0-5a2 2 0 012 2v1.06a9 9 0 015.94 5.94H21a2 2 0 110 4h-1.06A9 9 0 0114 18.94V20a2 2 0 11-4 0v-1.06A9 9 0 014.06 12H3a2 2 0 110-4h1.06A9 9 0 019.94 5.06V4a2 2 0 012-2z"/></svg>
-      </div>
-      <h1>База знаний AllTime</h1>
+    <div class="row">
+      <div class="logo"><i>⌚</i> <b>База знаний</b> <span class="muted">· Demo</span></div>
     </div>
-    
   </header>
 
-  <div class="layout">
-    <aside class="panel">
-      <div class="toolbar">
-        <span class="badge"><svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l4 4-4 4-4-4 4-4zm-6 8h12v10H6V10z"/></svg> Категории</span>
+  <main class="wrap">
+    <!-- Категории -->
+    <section id="view-cats" class="view active">
+      <h3 style="margin:4px 0 12px">Категории</h3>
+      <div id="cats-root" class="grid"></div>
+    </section>
+
+    <!-- Статьи (список) -->
+    <section id="view-articles" class="view">
+      <h3 style="margin:4px 0 10px">Статьи</h3>
+      <div id="articles-list" class="list"></div>
+    </section>
+
+    <!-- Поиск -->
+    <section id="view-search" class="view">
+      <h3 style="margin:4px 0 6px">Поиск</h3>
+      <div class="search">
+        <input id="q" type="search" placeholder="Название, теги, текст…" />
       </div>
-      <ul id="tree" class="tree"></ul>
-      <div class="hint">Нажми на категорию — справа покажется список статей. По клику на карточку откроется статья.</div>
-    </aside>
+      <div id="search-res" class="list"></div>
+    </section>
 
-    <main>
-      <section class="panel">
-        <div class="crumbs" id="crumbs"><span>Главная</span></div>
-        <!-- Панель поиска (открывается через вкладку) -->
-        <section id="searchPanel" class="panel" style="display:none; margin-bottom:10px;">
-          <form id="searchForm" class="search" onsubmit="return false;">
-            <input id="searchInput" type="search" placeholder="Поиск статей (например, водонепроницаемость)">
-            <button class="btn" id="searchBtn" title="Найти">
-              <svg class="ico" viewBox="0 0 24 24" width="18" height="18" fill="#0b1220"><path d="M21 21l-4.35-4.35M10 18a8 8 0 110-16 8 8 0 010 16z" stroke="#0b1220" stroke-width="2" fill="none"/></svg>
-              Найти
-            </button>
-          </form>
-        </section>
-        <section id="list" class="list"></section>
-        <section id="empty" class="panel" style="display:none">Ничего не найдено</section>
-        <section id="article" class="article">
-          <button class="btn back" id="backBtn">
-            <svg class="ico" viewBox="0 0 24 24" width="18" height="18" fill="#0b1220"><path d="M15 18l-6-6 6-6" stroke="#0b1220" stroke-width="2" fill="none"/></svg>
-            К списку
-          </button>
-          <h2 id="aTitle"></h2>
-          <p class="muted" id="aSummary"></p>
-          <div id="aBody"></div>
-        </section>
-          <section id="about" class="panel" style="display:none">
-            <h2>О проекте</h2>
-            <p class="muted">База знаний AllTime. Здесь собраны категории и статьи. Используйте вкладки внизу для навигации.</p>
-          </section>
-      </section>
-    </main>
-  </div>
+    <!-- Инфо -->
+    <section id="view-info" class="view">
+      <div class="card">
+        <h3 style="margin:4px 0 10px">О приложении</h3>
+        <p class="muted" style="margin:0">Это демо-витрина функционала: вкладки снизу, список категорий, статей, полнотекстовый поиск и просмотр статьи. Источник данных — Supabase через n8n (или локальные мок-данные, если API недоступен).</p>
+      </div>
+    </section>
 
-  <footer>Мини‑приложение Telegram. Бэкенд — n8n Webhook API.</footer>
-</div>
+    <!-- Динамические страницы: категория и статья -->
+    <section id="page-category" class="view">
+      <div class="crumbs"><a href="#/cats">Категории</a> <span class="sep">/</span> <span id="crumb-cat">…</span></div>
+      <div id="cat-children" class="grid" style="margin-bottom:12px"></div>
+      <div id="cat-articles" class="list"></div>
+    </section>
 
-<div id="toast" class="toast"></div>
+    <section id="page-article" class="view">
+      <button class="back" onclick="router.goBack()">← Назад</button>
+      <div class="crumbs" style="margin-top:8px"><a href="#/cats">Категории</a> <span class="sep">/</span> <a id="crumb-cat2" href="#/cats">…</a> <span class="sep">/</span> <span id="crumb-title">…</span></div>
+      <article class="article">
+        <h2 id="art-title">…</h2>
+        <div id="art-meta" class="meta">Обновлено …</div>
+        <div id="art-content" class="content"></div>
+      </article>
+    </section>
+  </main>
 
-<script>
-  // ====== ПАРАМЕТРЫ ======
-  const API_BASE = 'https://n-8-n.tech/webhook';             // production путь
-  const USE_HEADER = false;                                   // если true — отправляем X-Init-Data в заголовке (даст preflight)
-
-  const tg = window.Telegram?.WebApp;
-  const initData = tg?.initData || '';
-
-  if (tg) {
-    tg.expand(); tg.ready();
-    const tp = tg.themeParams || {};
-    const isDark = tg.colorScheme === 'dark';
-    const setVar = (k, v) => document.documentElement.style.setProperty(k, v);
-    setVar('--bg', tp.bg_color || (isDark ? '#0f1115' : '#ffffff'));
-    setVar('--text', tp.text_color || (isDark ? '#e5e7eb' : '#0f1115'));
-    setVar('--muted', tp.hint_color || (isDark ? '#94a3b8' : '#667085'));
-    setVar('--card', tp.secondary_bg_color || (isDark ? '#151922' : '#f4f6fb'));
-    setVar('--brand', tp.button_color || '#60a5fa');
-    setVar('--accent', tp.button_color || '#22d3ee');
-    setVar('--border', isDark ? '#263041' : '#e5e7eb');
-  }
-
-  // ====== ЭЛЕМЕНТЫ ======
-  const els = {
-    tree: document.getElementById('tree'),
-    list: document.getElementById('list'),
-    empty: document.getElementById('empty'),
-    article: document.getElementById('article'),
-    aTitle: document.getElementById('aTitle'),
-    aSummary: document.getElementById('aSummary'),
-    aBody: document.getElementById('aBody'),
-    backBtn: document.getElementById('backBtn'),
-    crumbs: document.getElementById('crumbs'),
-    toast: document.getElementById('toast'),
-    searchInput: document.getElementById('searchInput'),
-    searchBtn: document.getElementById('searchBtn'),
-    searchPanel: document.getElementById('searchPanel')
-  };
-
-  function toast(msg){ els.toast.textContent = msg; els.toast.style.display='block'; setTimeout(()=>els.toast.style.display='none', 1800); }
-
-  // ====== API HELPERS ======
-  function buildUrl(path, params={}){
-    const u = new URL(API_BASE + path);
-    // всегда добавляем initData в query — это надёжнее для версий n8n без OPTIONS
-    if (initData) params.initData = initData;
-    Object.entries(params).forEach(([k,v]) => { if (v !== undefined && v !== '') u.searchParams.set(k, v); });
-    return u.toString();
-  }
-
-  async function apiGet(path, params={}){
-    const url = buildUrl(path, params);
-    const headers = USE_HEADER && initData ? {"X-Init-Data": initData} : undefined;
-    const res = await fetch(url, { method:'GET', headers });
-    if(!res.ok){
-      let txt=''; try{ txt = await res.text(); }catch{}
-      throw new Error(`HTTP ${res.status}: ${txt}`);
-    }
-    return res.json();
-  }
-
-  // ====== UI RENDER ======
-  function nodeTpl(item, level=0){
-    const li = document.createElement('li');
-    li.innerHTML = `<div class="node" data-id="${item.id}" style="padding-left:${6+level*12}px">
-      <svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4h10v16H7zM4 7h16"/></svg>
-      <span>${item.title}</span>
-    </div>`;
-    if(item.children?.length){
-      const ul = document.createElement('ul'); ul.className='tree';
-      item.children.forEach(ch => ul.appendChild(nodeTpl(ch, level+1)));
-      li.appendChild(ul);
-    }
-    return li;
-  }
-
-  function setActiveNode(id){
-    document.querySelectorAll('.node').forEach(n => n.classList.toggle('active', n.dataset.id===id));
-  }
-
-  function setCrumbs(parts){
-    els.crumbs.innerHTML = parts.map((p,i)=> i? `<span class="sep">/</span><span>${p}</span>` : `<span>${p}</span>`).join('');
-  }
-
-  function showList(items){
-    els.article.style.display='none';
-    els.list.innerHTML='';
-    els.empty.style.display = items.length? 'none' : 'block';
-    items.forEach(it => {
-      const card = document.createElement('div');
-      card.className='card';
-      card.innerHTML = `
-        <div class="badge"><svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h16v12H4zM4 10h16"/></svg> Статья</div>
-        <h3>${it.title}</h3>
-        ${it.summary ? `<p class="muted">${it.summary}</p>` : ''}
-        <div style="margin-top:auto;display:flex;justify-content:flex-end">
-          <button class="btn" data-id="${it.id}">Открыть</button>
-        </div>`;
-      card.querySelector('button').addEventListener('click', () => openArticle(it.id));
-      els.list.appendChild(card);
-    });
-    window.scrollTo({top:0,behavior:'smooth'});
-  }
-
-  async function openArticle(id){
-    try{
-      const { article } = await apiGet('/kb/article', { id });
-      els.aTitle.textContent = article.title || '';
-      els.aSummary.textContent = article.summary || '';
-      els.aBody.innerHTML = article.content_html || '';
-      els.article.style.display='block';
-      window.scrollTo({top:0,behavior:'smooth'});
-      setCrumbs(['Главная', 'Статья']);
-    }catch(e){
-      console.error(e); toast('Не удалось загрузить статью');
-    }
-  }
-
-  // ====== LOADERS ======
-  async function loadTree(){
-    const { tree } = await apiGet('/kb/categories');
-    state.tree = tree;
-    els.tree.innerHTML='';
-    tree.forEach(item => els.tree.appendChild(nodeTpl(item)));
-    els.tree.querySelectorAll('.node').forEach(n => n.addEventListener('click', () => {
-      const id = n.dataset.id; setActiveNode(id); loadList(id);
-      setCrumbs(['Главная', n.textContent.trim()]);
-    }));
-    
-  }
-
-  async function loadList(category='', q=''){
-    try{
-      const { list } = await apiGet('/kb/articles', { category, q });
-      showList(list || []);
-    }catch(e){
-      console.error(e); toast('Не удалось получить список');
-    }
-  }
-
-  // ====== events ======
-  // обработчик поиска (вкладка «Поиск»)
-  if (els.searchBtn) {
-    els.searchBtn.addEventListener('click', () => {
-      const term = (els.searchInput.value || '').trim();
-      setTab('articles');
-      loadList('', term);
-      setCrumbs(['Главная', term ? `Поиск: ${term}` : 'Все статьи']);
-    });
-  }
-  els.backBtn.addEventListener('click', () => { els.article.style.display='none'; });
-
-  // ====== bottom tabs ======
-  const asideEl = document.querySelector('aside.panel');
-  let tabs = []; // заполним после загрузки DOM
-  const state = { lastCategory: null, tree: [] };
-
-  function bindTabs(){
-    tabs = Array.from(document.querySelectorAll('.tabbar .tab'));
-    // навешиваем обработчики клика на каждую вкладку
-    tabs.forEach(t => {
-      t.addEventListener('click', () => setTab(t.dataset.tab));
-    });
-  }
-  document.addEventListener('DOMContentLoaded', bindTabs);
-
-  function activateTab(tab){
-    tabs.forEach(t=>{
-      const active = t.dataset.tab===tab;
-      t.classList.toggle('active', active);
-      const bar = t.querySelector('.bar'); if(bar) bar.style.display = active ? 'block' : 'none';
-    });
-  }
-
-  function showCategories(){
-    asideEl.style.display='none';
-    els.article.style.display='none';
-    els.empty.style.display='none';
-    els.list.innerHTML='';
-    const roots = Array.isArray(state.tree) ? state.tree : [];
-    roots.forEach(cat=>{
-      const card = document.createElement('div');
-      card.className='card';
-      card.innerHTML = `
-        <div class="badge"><svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M3 4h18v4H3zM3 10h18v10H3z"/></svg> Категория</div>
-        <h3>${cat.title}</h3>
-        <div style="margin-top:auto;display:flex;justify-content:flex-end">
-          <button class="btn" data-id="${cat.id}">Открыть</button>
-        </div>`;
-      card.querySelector('button').addEventListener('click',()=>{
-        state.lastCategory = cat.id;
-        setCrumbs(['Категории', cat.title]);
-        setTab('articles');
-        loadList(cat.id,'');
-      });
-      els.list.appendChild(card);
-    });
-    setCrumbs(['Категории']);
-    window.scrollTo({top:0,behavior:'smooth'});
-  }
-
-  function setTab(tab){
-    activateTab(tab);
-    // всегда скрываем боковую панель-дерево
-    asideEl.style.display='none';
-    // скрываем вспомогательные панели
-    if (els.searchPanel) els.searchPanel.style.display='none';
-    document.getElementById('about').style.display='none';
-    els.article.style.display='none';
-
-    if(tab==='categories'){
-      // Первая страница — карточки категорий
-      els.list.innerHTML='';
-      els.empty.style.display='none';
-      showCategories();
-    } else if(tab==='articles'){
-      els.list.innerHTML='';
-      els.empty.style.display='none';
-      setCrumbs(['Все статьи']);
-      loadList('', '');
-    } else if(tab==='search'){
-      els.list.innerHTML='';
-      els.empty.style.display='none';
-      if (els.searchPanel) els.searchPanel.style.display='block';
-      setCrumbs(['Поиск']);
-    } else if(tab==='about'){
-      els.list.innerHTML='';
-      els.empty.style.display='none';
-      document.getElementById('about').style.display='block';
-      setCrumbs(['О проекте']);
-    }
-  }
-
-  // когда пользователь кликает по категории — запоминаем её
-  const origClickBinder = () => {
-    els.tree.querySelectorAll('.node').forEach(n => n.addEventListener('click', () => {
-      state.lastCategory = n.dataset.id;
-    }));
-  };
-
-  // run
-  loadTree().then(()=>{ origClickBinder(); setTab('categories'); }).catch(e => { console.error(e); toast('Ошибка загрузки'); });
-</script>
-  <nav class="tabbar" aria-label="Навигация">
+  <!-- Нижние вкладки -->
+  <nav class="tabbar">
     <div class="row">
-      <button class="tab active" data-tab="categories" title="Категории">
-        <svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M3 4h8v8H3zM13 4h8v8h-8zM3 14h8v8H3zM13 14h8v8h-8z"/></svg>
+      <button class="tab active" data-tab="cats" onclick="ui.switchTab('cats')">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 10h16M4 16h16M6 6h12"/></svg>
         <span class="label">Категории</span>
-        <div class="bar"></div>
       </button>
-      <button class="tab" data-tab="articles" title="Статьи">
-        <svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M5 4h14v2H5zm0 4h14v2H5zm0 4h10v2H5zm0 4h10v2H5z"/></svg>
+      <button class="tab" data-tab="articles" onclick="ui.switchTab('articles')">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 7h10M7 12h10M7 17h6"/></svg>
         <span class="label">Статьи</span>
-        <div class="bar" style="display:none"></div>
       </button>
-      <button class="tab" data-tab="search" title="Поиск">
-        <svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M21 21l-4.35-4.35M10 18a8 8 0 110-16 8 8 0 010 16z"/></svg>
+      <button class="tab" data-tab="search" onclick="ui.switchTab('search')">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
         <span class="label">Поиск</span>
-        <div class="bar" style="display:none"></div>
       </button>
-      <button class="tab" data-tab="about" title="О нас">
-        <svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 7h-2V7h2v2zm0 8h-2v-6h2v6z"/></svg>
+      <button class="tab" data-tab="info" onclick="ui.switchTab('info')">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8.5h.01M11 12h2v5h-2z"/></svg>
         <span class="label">Ещё</span>
-        <div class="bar" style="display:none"></div>
       </button>
     </div>
   </nav>
+
+<script>
+// === Конфиг ===
+const BASE_API = ''; // пример: 'https://kb.your-domain.tld' (n8n, где опубликованы /kb/*)
+const API = {
+  cats: '/kb/categories',
+  list: '/kb/articles',
+  article: (id) => `/kb/article?id=${encodeURIComponent(id)}`,
+};
+
+// fallback: мок-данные, если API недоступен
+const MOCK = {
+  catsTree: [
+    { id: 'movts', title: 'Механизмы', children: [
+      { id: 'mech', title: 'Механические', children: [] },
+      { id: 'quartz', title: 'Кварцевые', children: [] },
+    ]},
+    { id: 'brands', title: 'Бренды', children: [
+      { id: 'seiko', title: 'Seiko', children: [] },
+      { id: 'luch', title: 'Луч', children: [] },
+    ]},
+  ],
+  articles: [
+    { id: 'a1', title: 'Как работает автоматический подзавод', category_id: 'mech', summary: 'Принцип работы ротора и барабана', updated_at: '2025-08-18T10:00:00Z', content_html: '<p>Автоматический подзавод использует <b>ротор</b>, который вращается от движений руки…</p>'},
+    { id: 'a2', title: 'Что такое сапфировое стекло', category_id: 'quartz', summary: 'Плюсы и минусы', updated_at: '2025-08-17T12:00:00Z', content_html: '<p>Сапфир — очень твёрдый материал (MOHS 9). Он устойчив к царапинам…</p>'},
+    { id: 'a3', title: 'История бренда «Луч»', category_id: 'luch', summary: 'Минский часовой завод', updated_at: '2025-08-16T09:00:00Z', content_html: '<p>«Луч» — иконичные однострелочники, коллаборации и современное производство…</p>'},
+  ],
+};
+
+const state = {
+  catsTree: [],
+  catsById: new Map(),
+  articles: [],
+  articleById: new Map(),
+  history: [],
+  useMock: false,
+};
+
+const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+if (tg) {
+  try { tg.expand(); } catch(_){}
+}
+
+// обёртка над fetch с подписью Telegram
+async function apiGet(path) {
+  const url = (BASE_API ? BASE_API.replace(/\/$/, '') : '') + path;
+  const headers = {};
+  if (tg && tg.initData) headers['X-Init-Data'] = tg.initData;
+  const res = await fetch(url, { headers });
+  if (!res.ok) throw new Error('HTTP '+res.status);
+  return await res.json();
+}
+
+async function loadData() {
+  try {
+    const cats = await apiGet(API.cats); // ожидается { tree: [...] }
+    state.catsTree = (Array.isArray(cats.tree) ? cats.tree : cats[0]?.tree) || [];
+  } catch(e) {
+    console.warn('Категории из API недоступны, использую мок-данные', e);
+    state.catsTree = MOCK.catsTree; state.useMock = true;
+  }
+  // плоская карта категорий
+  const walk = (arr, parent=null) => arr.forEach(n=>{ state.catsById.set(n.id, {...n,parent}); if(n.children?.length) walk(n.children,n.id); });
+  state.catsById.clear(); walk(state.catsTree);
+
+  try {
+    const list = await apiGet(API.list); // ожидается массив
+    state.articles = Array.isArray(list.list) ? list.list : (Array.isArray(list) ? list : []);
+  } catch(e) {
+    console.warn('Статьи из API недоступны, использую мок-данные', e);
+    state.articles = MOCK.articles; state.useMock = true;
+  }
+  // карта статей (если API вернул без контента — подгрузим по требованию)
+  state.articleById.clear();
+  for (const a of state.articles) state.articleById.set(a.id, a);
+
+  ui.renderCatsRoot();
+  ui.renderArticles();
+}
+
+// === UI ===
+const ui = {
+  switchTab(name){
+    document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    const map = {cats:'view-cats', articles:'view-articles', search:'view-search', info:'view-info'};
+    const id = map[name] || 'view-cats';
+    document.getElementById(id).classList.add('active');
+    router.push(`#/${name}`);
+  },
+  renderCatsRoot(){
+    const root = document.getElementById('cats-root');
+    root.innerHTML = '';
+    state.catsTree.forEach(cat=>{
+      const el = card(cat.title, ()=>router.goCat(cat.id));
+      root.appendChild(el);
+    });
+  },
+  renderCat(id){
+    const cat = state.catsById.get(id); if(!cat) return;
+    document.getElementById('crumb-cat').textContent = cat.title;
+    document.getElementById('crumb-cat2').textContent = cat.title;
+    document.getElementById('crumb-cat2').href = `#/category/${encodeURIComponent(id)}`;
+
+    // дочерние категории
+    const kids = document.getElementById('cat-children'); kids.innerHTML='';
+    (cat.children||[]).forEach(c=>kids.appendChild(card(c.title,()=>router.goCat(c.id))));
+
+    // статьи категории
+    const list = document.getElementById('cat-articles'); list.innerHTML='';
+    state.articles.filter(a=>a.category_id===id).forEach(a=>{
+      list.appendChild(itemArticle(a));
+    });
+  },
+  renderArticles(){
+    const box = document.getElementById('articles-list'); box.innerHTML='';
+    state.articles.forEach(a=> box.appendChild(itemArticle(a)) );
+  },
+  renderArticle(data){
+    document.getElementById('art-title').textContent = data.title || 'Статья';
+    const d = data.updated_at ? new Date(data.updated_at) : null;
+    document.getElementById('art-meta').textContent = d ? `Обновлено ${d.toLocaleDateString('ru-RU')}` : '';
+    document.getElementById('art-content').innerHTML = data.content_html || '<p class="muted">Нет содержимого.</p>';
+  },
+  renderSearch(q){
+    const res = document.getElementById('search-res'); res.innerHTML='';
+    const norm = (s)=> (s||'').toString().toLowerCase();
+    const hit = state.articles.filter(a=>{
+      const body = (state.articleById.get(a.id)?.content_html||'').replace(/<[^>]*>/g,' ');
+      return norm(a.title).includes(q)||norm(a.summary).includes(q)||norm(body).includes(q);
+    });
+    hit.forEach(a=>res.appendChild(itemArticle(a)));
+  }
+};
+
+function card(title, onClick){
+  const el = document.createElement('div'); el.className='card click'; el.onclick=onClick;
+  el.innerHTML = `<div style="display:flex;gap:10px;align-items:center"><svg class="ico" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h12M6 12h12M6 16h8"/></svg><b>${escapeHtml(title)}</b></div>`;
+  return el;
+}
+
+function itemArticle(a){
+  const el = document.createElement('div'); el.className='item'; el.onclick=()=>router.goArticle(a.id);
+  const cat = state.catsById.get(a.category_id); const catTitle = cat?cat.title:'Без категории';
+  const date = a.updated_at ? new Date(a.updated_at).toLocaleDateString('ru-RU') : '';
+  el.innerHTML = `
+    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 7h10M7 12h10M7 17h6"/></svg>
+    <div>
+      <h4>${escapeHtml(a.title)}</h4>
+      <div class="meta">${escapeHtml(catTitle)} • ${date}</div>
+      ${a.summary?`<div class="muted" style="margin-top:4px">${escapeHtml(a.summary)}</div>`:''}
+    </div>`;
+  return el;
+}
+
+function escapeHtml(s){
+  return (s==null?'':String(s)).replace(/[&<>\"]/g, ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[ch]));
+}
+
+// === Роутер (hash-based) ===
+const router = {
+  push(h){ if (location.hash!==h) location.hash=h; },
+  goBack(){ history.back(); },
+  goCat(id){ this.push(`#/category/${encodeURIComponent(id)}`); },
+  goArticle(id){ this.push(`#/article/${encodeURIComponent(id)}`); },
+  handle(){
+    const h = location.hash || '#/cats';
+    // вкладки
+    if (/^#\/(cats|articles|search|info)$/.test(h)) {
+      const tab = h.split('/')[1]; ui.switchTab(tab); return;
+    }
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    // категория
+    let m = h.match(/^#\/category\/([^/]+)/);
+    if (m){ document.getElementById('page-category').classList.add('active'); ui.renderCat(decodeURIComponent(m[1])); return; }
+    // статья
+    m = h.match(/^#\/article\/([^/]+)/);
+    if (m){ document.getElementById('page-article').classList.add('active'); loadArticle(decodeURIComponent(m[1])); return; }
+    // дефолт
+    ui.switchTab('cats');
+  }
+};
+window.addEventListener('hashchange', ()=>router.handle());
+
+async function loadArticle(id){
+  let data = state.articleById.get(id);
+  if (!data || !data.content_html) {
+    if (!state.useMock) {
+      try {
+        const res = await apiGet(API.article(id));
+        const row = Array.isArray(res) ? res[0] : (res.article||res);
+        if (row) { data = { ...data, ...row }; state.articleById.set(id, data); }
+      } catch(e) {
+        console.warn('Не удалось загрузить статью по API', e);
+      }
+    }
+    if (!data) { data = MOCK.articles.find(x=>x.id===id); }
+  }
+  if (data) ui.renderArticle(data);
+}
+
+// Поиск
+const searchInput = document.getElementById('q');
+searchInput?.addEventListener('input', e=> ui.renderSearch((e.target.value||'').toLowerCase()) );
+
+// Первый запуск
+loadData().then(()=> router.handle());
+</script>
 </body>
 </html>
