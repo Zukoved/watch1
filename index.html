@@ -15,15 +15,16 @@
     .level-select button{width:180px;padding:12px;border-radius:12px;border:1px solid #d0d0d0;background:var(--card);font-size:16px;cursor:pointer}
     .topics{display:flex;flex-direction:column;gap:12px;margin-top:20px}
     .topics li{list-style:none;background:var(--card);padding:12px;border:1px solid #e0e0e0;border-radius:12px}
-    .brand-list,.article-list{display:flex;flex-direction:column;gap:12px;margin-top:20px}
-    .brand-list div,.article-list div{background:var(--card);padding:14px;border:1px solid #e0e0e0;border-radius:12px}
-    .article{background:var(--card);padding:16px;border:1px solid #e0e0e0;border-radius:12px;margin-top:20px}
-    footer.tabs{position:fixed;bottom:0;left:0;right:0;height:64px;background:var(--card);border-top:1px solid #e0e0e0;display:flex;z-index:10}
-    footer.tabs button{flex:1;border:none;background:none;font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);cursor:pointer}
-    footer.tabs button span{font-size:20px;margin-bottom:4px}
-    footer.tabs button.active{color:var(--accent)}
-    .back{margin-top:8px;margin-bottom:8px;background:none;border:none;color:var(--accent);cursor:pointer;font-size:14px}
-  </style>
+      .brand-list,.article-list{display:flex;flex-direction:column;gap:12px;margin-top:20px}
+      .brand-list div,.article-list div{background:var(--card);padding:14px;border:1px solid #e0e0e0;border-radius:12px}
+      .article{background:var(--card);padding:16px;border:1px solid #e0e0e0;border-radius:12px;margin-top:20px}
+      footer.tabs{position:fixed;bottom:0;left:0;right:0;height:64px;background:var(--card);border-top:1px solid #e0e0e0;display:flex;z-index:10}
+      footer.tabs button{flex:1;border:none;background:none;font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);cursor:pointer}
+      footer.tabs button span{font-size:20px;margin-bottom:4px}
+      footer.tabs button.active{color:var(--accent)}
+      .back{margin-top:8px;margin-bottom:8px;background:none;border:none;color:var(--accent);cursor:pointer;font-size:14px}
+      .muted{color:var(--muted)}
+    </style>
 </head>
 <body>
   <header><h1>База знаний</h1></header>
@@ -50,11 +51,18 @@
     let currentCategory = null;
 
     async function loadData(){
-      const { data:cats } = await sb.from('categories').select('*');
-      categories = cats || [];
-      const { data:arts } = await sb.from('articles').select('*');
-      articles = arts || [];
-      renderInfoHome();
+      try{
+        const { data:cats, error:catErr } = await sb.from('categories').select('*');
+        if(catErr) throw catErr;
+        categories = cats || [];
+        const { data:arts, error:artErr } = await sb.from('articles').select('*');
+        if(artErr) throw artErr;
+        articles = arts || [];
+        renderInfoHome();
+      }catch(err){
+        console.error('Ошибка загрузки данных', err);
+        view.innerHTML='<p class="muted">Не удалось загрузить данные.</p>';
+      }
     }
 
     function showTab(tab){
