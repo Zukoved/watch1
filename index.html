@@ -5,165 +5,255 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>WatchApp — база знаний</title>
   <style>
-    :root { --bg:#0e0f13; --card:#171923; --text:#e6e8ef; --muted:#9aa3b2; --accent:#5ea1ff; }
-    *{box-sizing:border-box} body{margin:0;font:16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--text);}
-    header{position:sticky;top:0;background:rgba(23,25,35,.8);backdrop-filter:saturate(160%) blur(12px);
-      display:flex;gap:12px;align-items:center;padding:10px 14px;border-bottom:1px solid #242736}
-    header h1{font-size:16px;margin:0 10px 0 0;color:#fff}
-    nav a{color:var(--muted);text-decoration:none;margin-right:14px}
-    nav a.active{color:#fff}
-    main{max-width:980px;margin:0 auto;padding:20px}
-    .card{background:var(--card);border:1px solid #22263a;border-radius:14px;padding:16px;margin:12px 0}
-    ul.tree{list-style:none;padding-left:18px}
-    ul.tree li{margin:6px 0}
+    :root{--bg:#0f1116;--card:#151822;--text:#e6e9f0;--muted:#98a2b3;--accent:#7aa2ff;--line:#222837;}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text);}
+    header{position:fixed;top:0;left:0;right:0;height:56px;background:var(--card);display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--line);z-index:10}
+    header h1{font-size:18px;font-weight:600}
+    main{padding:72px 16px 88px;max-width:960px;margin:0 auto}
+    .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+    .grid{display:grid;gap:12px}
+    .btn{display:block;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#111523;color:var(--text);text-decoration:none;cursor:pointer}
+    .btn:hover{border-color:#2e364a}
+    .btn-ghost{background:transparent}
+    .title{font-size:22px;font-weight:700;margin-bottom:8px}
     .muted{color:var(--muted)}
-    .list{display:grid;grid-template-columns:repeat(auto-fill, minmax(260px,1fr));gap:12px}
-    .item{background:var(--card);border:1px solid #22263a;border-radius:12px;padding:14px}
-    .item h3{margin:0 0 8px 0;font-size:16px}
-    a.btn{display:inline-block;padding:8px 10px;border:1px solid #2a2f45;border-radius:10px;color:#fff;text-decoration:none}
-    .article h1{margin-top:0}
-    .breadcrumbs a{color:var(--muted);text-decoration:none}
-    .breadcrumbs{margin-bottom:10px}
-    .empty{padding:28px;text-align:center;color:var(--muted)}
-    code.k{background:#10131d;border:1px solid #1e2336;border-radius:8px;padding:2px 6px}
+    .list{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+    .item{padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#101422;cursor:pointer}
+    .item h4{font-size:16px;margin-bottom:4px}
+    .tabs{position:fixed;bottom:0;left:0;right:0;height:68px;background:var(--card);border-top:1px solid var(--line);display:flex;z-index:10}
+    .tabs button{flex:1;border:none;background:transparent;color:var(--muted);font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer}
+    .tabs button.active{color:var(--accent)}
+    .back{margin-bottom:12px}
+    .article{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+    .article h1{font-size:22px;margin-bottom:10px}
+    .breadcrumb{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+    .breadcrumb a{color:var(--accent);text-decoration:none}
+    .empty{color:var(--muted);padding:16px 0}
+    .loading{padding:8px 0;color:var(--muted)}
+    a, .click{color:#8bb3ff}
   </style>
 </head>
 <body>
-  <header>
-    <h1>WatchApp</h1>
-    <nav>
-      <a href="#/cats" data-link>Категории</a>
-      <a href="#/articles" data-link>Статьи</a>
-    </nav>
-    <div class="muted" style="margin-left:auto">Mini App</div>
-  </header>
+  <header><h1>База знаний</h1></header>
+  <main id="app"><div class="panel"><div class="loading">Загрузка…</div></div></main>
 
-  <main id="app"><div class="card">Загрузка…</div></main>
+  <footer class="tabs">
+    <button data-tab="info" class="active">⌚<span>Общая информация</span></button>
+    <button data-tab="brands">🏷️<span>Бренды</span></button>
+    <button data-tab="articles">📰<span>Статьи</span></button>
+  </footer>
 
   <script>
-    // === НАСТРОЙКИ ===
-    // Поставь базовый URL своего n8n (Production URL Webhook)
-    const BASE_API = "https://n-8-n.tech/webhook"; // например: https://n8n.example.com
+    // === API ===
+    const BASE_API = "https://n-8-n.tech/webhook"; // без завершающего слэша!
     const API = {
-      cats:     () => BASE_API + '/kb/categories',
-      list:     () => BASE_API + '/kb/articles',
-      article:  (id) => BASE_API + '/kb/article?id=' + encodeURIComponent(id),
+      cats:    () => `${BASE_API}/kb/categories`,
+      list:    (categoryId) => categoryId
+                  ? `${BASE_API}/kb/articles?category=${encodeURIComponent(categoryId)}`
+                  : `${BASE_API}/kb/articles`,
+      article: (id) => `${BASE_API}/kb/article?id=${encodeURIComponent(id)}`,
     };
 
-    // Telegram initData (если Mini App)
-    const initData = (typeof Telegram !== 'undefined' && Telegram.WebApp && Telegram.WebApp.initData) ? Telegram.WebApp.initData : '';
-    if (typeof Telegram !== 'undefined' && Telegram.WebApp && Telegram.WebApp.ready) Telegram.WebApp.ready();
-
-    async function fetchJSON(url){
-      const res = await fetch(url, {
-        headers: initData ? {'X-Init-Data': initData} : {}
+    // === Telegram initData (если есть) ===
+    function getInitData() {
+      try {
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
+          return window.Telegram.WebApp.initData;
+        }
+      } catch (_) {}
+      return "";
+    }
+    async function apiGet(url) {
+      const headers = {};
+      const initData = getInitData();
+      if (initData) headers["X-Init-Data"] = initData;
+      const res = await fetch(url, { headers });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json().catch(async () => {
+        // если вдруг пришёл не JSON (например, текст) — попробуем как текст
+        const t = await res.text();
+        try { return JSON.parse(t); } catch { return t; }
       });
-      if(!res.ok) throw new Error('HTTP '+res.status);
-      return await res.json();
     }
 
-    // === Рендеры ===
-    const el = (sel, root=document)=>root.querySelector(sel);
+    // === состояние ===
+    const state = {
+      tab: "info",
+      tree: null,
+      nodes: {
+        general: null,
+        brands: null,
+        levels: {} // basic/advanced/pro
+      },
+      stack: [] // для "назад"
+    };
 
-    function renderCats(tree){
-      const rec = (nodes) => {
-        const ul = document.createElement('ul'); ul.className='tree';
-        nodes.forEach(n=>{
-          const li = document.createElement('li');
-          const link = document.createElement('a');
-          link.href = '#/articles?cat=' + encodeURIComponent(n.id);
-          link.textContent = n.title;
-          li.appendChild(link);
-          if (n.children && n.children.length) li.appendChild(rec(n.children));
-          ul.appendChild(li);
-        });
-        return ul;
-      };
-      const box = document.createElement('div');
-      box.className='card';
-      box.innerHTML = '<h2>Категории</h2><p class="muted">Нажми на категорию, чтобы увидеть статьи.</p>';
-      box.appendChild(rec(tree));
-      return box;
+    // === helpers ===
+    const app = document.getElementById("app");
+    function h(tag, attrs={}, ...children){
+      const el = document.createElement(tag);
+      Object.entries(attrs).forEach(([k,v])=>{
+        if (k === "class") el.className = v;
+        else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+        else el.setAttribute(k, v);
+      });
+      children.flat().forEach(c => {
+        if (typeof c === "string") el.appendChild(document.createTextNode(c));
+        else if (c) el.appendChild(c);
+      });
+      return el;
     }
+    function clear(){ app.innerHTML = ""; }
+    function setTab(tab){
+      state.tab = tab;
+      document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+      if (tab === "info") renderInfoHome();
+      if (tab === "brands") renderBrandsHome();
+      if (tab === "articles") renderArticlesHome();
+    }
+    document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => setTab(b.dataset.tab));
 
-    function renderArticleList(list, params){
-      const wrap = document.createElement('div'); wrap.className='list';
-      const cat = params.get('cat');
-      const filtered = cat ? list.filter(a => a.category_id === cat) : list;
-      if (!filtered.length) {
-        const empty = document.createElement('div');
-        empty.className = 'card empty';
-        empty.textContent = 'Пока пусто.';
-        return empty;
+    // === загрузка дерева категорий ===
+    async function loadTree() {
+      const data = await apiGet(API.cats());
+      const tree = Array.isArray(data) ? data : (data.tree || []);
+      state.tree = tree;
+
+      // находим узлы "Общая информация" и "Бренды"
+      const byId = id => tree.find(n => n.id === id);
+      const byTitle = t => tree.find(n => (n.title||"").toLowerCase().includes(t));
+      state.nodes.general = byId("general") || byTitle("общая информация");
+      state.nodes.brands  = byId("brands")  || byTitle("бренд");
+      if (state.nodes.general) {
+        const kids = state.nodes.general.children || [];
+        state.nodes.levels.basic    = kids.find(n => n.id === "basic")    || kids.find(n => /базов/i.test(n.title||""));
+        state.nodes.levels.advanced = kids.find(n => n.id === "advanced") || kids.find(n => /продвинут/i.test(n.title||""));
+        state.nodes.levels.pro      = kids.find(n => n.id === "pro")      || kids.find(n => /проф/i.test(n.title||""));
       }
-      filtered.forEach(a=>{
-        const card = document.createElement('div'); card.className='item';
-        card.innerHTML = `
-          <h3>${a.title}</h3>
-          <p class="muted">${a.summary ? a.summary : '—'}</p>
-          <a class="btn" href="#/article/${encodeURIComponent(a.id)}">Открыть</a>
-        `;
-        wrap.appendChild(card);
-      });
-      return wrap;
     }
 
-    function renderArticle(a){
-      const box = document.createElement('div'); box.className='card article';
-      const bc = document.createElement('div'); bc.className = 'breadcrumbs';
-      bc.innerHTML = `<a href="#/cats">Категории</a> · <a href="#/articles?cat=${encodeURIComponent(a.category_id)}">Статьи</a>`;
-      const h = document.createElement('h1'); h.textContent = a.title;
-      const body = document.createElement('div');
-      body.innerHTML = a.content_html || '<p class="muted">Пусто. Добавь текст в Supabase.</p>';
-      box.append(bc,h,body);
-      return box;
+    // === РЕНДЕРЫ ===
+    function renderInfoHome(){
+      clear();
+      const g = state.nodes.general;
+      if (!g) return app.appendChild(h("div",{class:"panel"}, h("div",{class:"empty"},"Нет раздела «Общая информация»")));
+      app.appendChild(
+        h("div",{class:"panel"},
+          h("div",{class:"title"},"Общая информация"),
+          h("div",{class:"grid"},
+            h("button",{class:"btn",onclick:()=>renderLevel('basic')}, "Базовый"),
+            h("button",{class:"btn",onclick:()=>renderLevel('advanced')}, "Продвинутый"),
+            h("button",{class:"btn",onclick:()=>renderLevel('pro')}, "Профи"),
+          ),
+        )
+      );
     }
 
-    // === Роутер ===
-    function parseHash(){
-      const [path, q=''] = (location.hash.slice(1) || '/cats').split('?');
-      const parts = path.split('/').filter(Boolean);
-      const params = new URLSearchParams(q);
-      return {parts, params};
+    function renderLevel(key){
+      const levelNode = state.nodes.levels[key];
+      clear();
+      const back = h("button",{class:"btn btn-ghost back",onclick:()=>renderInfoHome()},"← Назад");
+      const title = h("div",{class:"title"}, levelNode?.title || "Раздел");
+      const topics = (levelNode?.children || []);
+      const list = h("div",{class:"list"},
+        topics.map(cat =>
+          h("div",{class:"item",onclick:()=>renderTopic(cat)}, h("h4",{},cat.title), h("div",{class:"muted"},"Открыть темы и статьи"))
+        )
+      );
+      app.appendChild(h("div",{class:"panel"}, back, title, list));
     }
 
-    async function router(){
-      // active nav
-      document.querySelectorAll('nav a[data-link]').forEach(a=>a.classList.toggle('active', a.getAttribute('href')===location.hash));
-      const app = el('#app'); app.innerHTML='<div class="card">Загрузка…</div>';
-      const {parts, params} = parseHash();
-
+    async function renderTopic(cat){
+      clear();
+      app.appendChild(h("div",{class:"panel"}, h("button",{class:"btn btn-ghost back",onclick:()=>renderLevelFromChild(cat)}, "← Назад"),
+        h("div",{class:"title"},cat.title),
+        h("div",{class:"loading"},"Загружаем статьи…")
+      ));
       try{
-        if (parts[0]==='cats' || parts[0]===''){
-          const data = await fetchJSON(API.cats());
-          app.innerHTML='';
-          app.appendChild(renderCats(data.tree || []));
-          return;
-        }
-        if (parts[0]==='articles'){
-          const data = await fetchJSON(API.list());
-          app.innerHTML='';
-          const listEl = renderArticleList(data.list || [], params);
-          const head = document.createElement('div'); head.className='card';
-          head.innerHTML = `<h2>Статьи</h2>${params.get('cat') ? `<div class="muted">Фильтр по категории: <code class="k">${params.get('cat')}</code></div>`:''}`;
-          app.appendChild(head);
-          app.appendChild(listEl);
-          return;
-        }
-        if (parts[0]==='article' && parts[1]){
-          const data = await fetchJSON(API.article(decodeURIComponent(parts[1])));
-          app.innerHTML='';
-          app.appendChild(renderArticle(data.article || {}));
-          return;
-        }
-        location.hash = '#/cats';
+        const data = await apiGet(API.list(cat.id));
+        const items = Array.isArray(data) ? data : (data.items || []);
+        const list = items.length
+          ? h("div",{class:"list"}, items.map(a =>
+               h("div",{class:"item",onclick:()=>openArticle(a.id)},
+                 h("h4",{},a.title || "Без заголовка"),
+                 a.summary ? h("div",{class:"muted"},a.summary) : null
+               )))
+          : h("div",{class:"empty"},"Статей в этой теме пока нет.");
+        app.querySelector(".panel").lastChild.replaceWith(list);
       }catch(e){
-        app.innerHTML = `<div class="card">Ошибка загрузки: ${e.message}</div>`;
+        app.querySelector(".panel").lastChild.replaceWith(h("div",{class:"empty"},"Ошибка загрузки статей"));
+      }
+    }
+    function renderLevelFromChild(cat){
+      // возвращаемся к уровню, у которого этот cat является дочерним
+      const keys = ["basic","advanced","pro"];
+      const key = keys.find(k => (state.nodes.levels[k]?.children||[]).some(c=>c.id===cat.id));
+      if (key) renderLevel(key); else renderInfoHome();
+    }
+
+    function renderBrandsHome(){
+      clear();
+      const b = state.nodes.brands;
+      if (!b) return app.appendChild(h("div",{class:"panel"}, h("div",{class:"empty"},"Нет раздела «Бренды»")));
+      const list = (b.children||[]).map(cat =>
+        h("div",{class:"item",onclick:()=>renderTopic(cat)},
+          h("h4",{}, cat.title)
+        )
+      );
+      app.appendChild(h("div",{class:"panel"}, h("div",{class:"title"},"Бренды"), h("div",{class:"list"}, list)));
+    }
+
+    async function renderArticlesHome(){
+      clear();
+      app.appendChild(h("div",{class:"panel"},
+        h("div",{class:"title"},"Все статьи"),
+        h("div",{class:"loading"},"Загружаем…")
+      ));
+      try{
+        const data = await apiGet(API.list()); // без категории = все опубликованные
+        const items = Array.isArray(data) ? data : (data.items || []);
+        const list = items.length
+          ? h("div",{class:"list"}, items.map(a =>
+               h("div",{class:"item",onclick:()=>openArticle(a.id)},
+                 h("h4",{},a.title || "Без заголовка"),
+                 a.summary ? h("div",{class:"muted"},a.summary) : null
+               )))
+          : h("div",{class:"empty"},"Пока нет статей.");
+        app.querySelector(".panel").lastChild.replaceWith(list);
+      }catch(e){
+        app.querySelector(".panel").lastChild.replaceWith(h("div",{class:"empty"},"Ошибка загрузки."));
       }
     }
 
-    window.addEventListener('hashchange', router);
-    router();
+    async function openArticle(id){
+      clear();
+      app.appendChild(h("div",{class:"panel"},
+        h("button",{class:"btn btn-ghost back",onclick:()=>window.history.back()},"← Назад"),
+        h("div",{class:"loading"},"Открываем статью…")
+      ));
+      try{
+        const data = await apiGet(API.article(id));
+        const article = data.article || (Array.isArray(data) ? data[0] : data);
+        const box = h("div",{class:"article"});
+        box.innerHTML = `<h1>${escapeHtml(article?.title || "Статья")}</h1>` + (article?.content_html || "<p class='muted'>Пусто</p>");
+        app.querySelector(".panel").lastChild.replaceWith(box);
+      }catch(e){
+        app.querySelector(".panel").lastChild.replaceWith(h("div",{class:"empty"},"Не удалось загрузить статью."));
+      }
+    }
+    function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c])); }
+
+    // запуск
+    (async()=>{
+      try{
+        await loadTree();
+      }catch(e){
+        app.innerHTML = `<div class="panel"><div class="empty">Не удалось получить структуру. Откройте позже.</div></div>`;
+        return;
+      }
+      setTab("info");
+    })();
   </script>
 </body>
 </html>
