@@ -75,15 +75,14 @@
       if (initData) headers["X-Init-Data"] = initData;
       const res = await fetch(url,{headers});
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      // пробуем как JSON, иначе вернём текст
       try { return await res.json(); } catch { return await res.text(); }
     }
 
     // ===== состояние / история =====
     const app = document.getElementById("app");
     const backBtn = document.getElementById("backBtn");
-    const nav = []; // наш собственный стек
-    const state = { tab:"info", tree:null, nodes:{ general:null, brands:null, levels:{} } };
+    const nav = []; // наш стек
+    const state = { tab:"info", tree:null, nodes:{ general:null, brands:null, articles:null, levels:{} } };
     function push(view){ nav.push(view); render(view); }
     function back(){ nav.pop(); const v = nav[nav.length-1] || {type:"home",tab:state.tab}; render(v); }
     backBtn.onclick = () => back();
@@ -115,11 +114,12 @@
       const tree = Array.isArray(raw) ? raw : (raw.tree || []);
       state.tree = tree;
 
-      // найдём корни "Общая информация" и "Бренды"
+      // найдём корни "Общая информация" / "Бренды" / "Статьи"
       const byId = id => tree.find(n => n.id===id);
       const byTitle = t => tree.find(n => (n.title||"").toLowerCase().includes(t));
-      state.nodes.general = byId("general") || byTitle("общ");
-      state.nodes.brands  = byId("brands")  || byTitle("бренд");
+      state.nodes.general  = byId("general")  || byTitle("общ");
+      state.nodes.brands   = byId("brands")   || byTitle("бренд");
+      state.nodes.articles = byId("articles") || byTitle("статьи");
 
       if (state.nodes.general){
         const kids = state.nodes.general.children || [];
@@ -148,7 +148,6 @@
     }
 
     function renderInfoHome(){
-      const g = state.nodes.general;
       const panel = h("div",{class:"panel"},
         h("div",{class:"title"},"Общая информация"),
         h("div",{class:"grid"},
@@ -192,7 +191,17 @@
       app.appendChild(h("div",{class:"panel"}, h("div",{class:"title"},"Бренды"), h("div",{class:"list"}, list.length?list:h("div",{class:"empty"},"Пока нет разделов брендов."))));
     }
 
+    // Вкладка "Статьи": если у корня articles есть подразделы — показываем их; если нет — сразу все статьи
     async function renderArticlesHome(){
+      const root = state.nodes.articles;
+      if (root && (root.children||[]).length){
+        const list = root.children.map(cat =>
+          h("div",{class:"item",onclick:()=>push({type:"articles",categoryId:cat.id,title:cat.title})}, h("h4",{},cat.title))
+        );
+        app.appendChild(h("div",{class:"panel"}, h("div",{class:"title"},"Статьи"), h("div",{class:"list"}, list)));
+        return;
+      }
+      // иначе — список всех опубликованных
       const box = h("div",{class:"panel"}, h("div",{class:"title"},"Все статьи"), h("div",{class:"loading"},"Загружаем…"));
       app.appendChild(box);
       try{
@@ -239,7 +248,6 @@
     // запуск
     (async()=>{
       try{ await loadTree(); }catch{ app.innerHTML=`<div class="panel"><div class="empty">Не удалось получить структуру.</div></div>`; return; }
-      // вкладки
       document.querySelectorAll(".tabs button").forEach(b => b.onclick = ()=>setTab(b.dataset.tab));
       setTab("info");
     })();
