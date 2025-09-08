@@ -3,116 +3,167 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>База знаний</title>
+  <title>WatchApp — база знаний</title>
   <style>
-    :root{--bg:#f5f5f7;--card:#fff;--text:#222;--muted:#666;--accent:#0a84ff;}
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text);}
-    header{position:fixed;top:0;left:0;right:0;height:56px;background:var(--card);display:flex;align-items:center;justify-content:center;border-bottom:1px solid #e0e0e0;z-index:10}
-    header h1{font-size:18px;font-weight:600}
-    main{padding:72px 16px 80px;max-width:960px;margin:0 auto}
-    .level-select{display:flex;flex-direction:column;gap:14px;align-items:center;margin-top:40px}
-    .level-select button{width:180px;padding:12px;border-radius:12px;border:1px solid #d0d0d0;background:var(--card);font-size:16px;cursor:pointer}
-    .topics{display:flex;flex-direction:column;gap:12px;margin-top:20px}
-    .topics li{list-style:none;background:var(--card);padding:12px;border:1px solid #e0e0e0;border-radius:12px}
-    .brand-list,.article-list{display:flex;flex-direction:column;gap:12px;margin-top:20px}
-    .brand-list div,.article-list div{background:var(--card);padding:14px;border:1px solid #e0e0e0;border-radius:12px}
-    .article{background:var(--card);padding:16px;border:1px solid #e0e0e0;border-radius:12px;margin-top:20px}
-    footer.tabs{position:fixed;bottom:0;left:0;right:0;height:64px;background:var(--card);border-top:1px solid #e0e0e0;display:flex;z-index:10}
-    footer.tabs button{flex:1;border:none;background:none;font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);cursor:pointer}
-    footer.tabs button span{font-size:20px;margin-bottom:4px}
-    footer.tabs button.active{color:var(--accent)}
-    .back{margin-top:8px;margin-bottom:8px;background:none;border:none;color:var(--accent);cursor:pointer;font-size:14px}
+    :root { --bg:#0e0f13; --card:#171923; --text:#e6e8ef; --muted:#9aa3b2; --accent:#5ea1ff; }
+    *{box-sizing:border-box} body{margin:0;font:16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--text);}
+    header{position:sticky;top:0;background:rgba(23,25,35,.8);backdrop-filter:saturate(160%) blur(12px);
+      display:flex;gap:12px;align-items:center;padding:10px 14px;border-bottom:1px solid #242736}
+    header h1{font-size:16px;margin:0 10px 0 0;color:#fff}
+    nav a{color:var(--muted);text-decoration:none;margin-right:14px}
+    nav a.active{color:#fff}
+    main{max-width:980px;margin:0 auto;padding:20px}
+    .card{background:var(--card);border:1px solid #22263a;border-radius:14px;padding:16px;margin:12px 0}
+    ul.tree{list-style:none;padding-left:18px}
+    ul.tree li{margin:6px 0}
+    .muted{color:var(--muted)}
+    .list{display:grid;grid-template-columns:repeat(auto-fill, minmax(260px,1fr));gap:12px}
+    .item{background:var(--card);border:1px solid #22263a;border-radius:12px;padding:14px}
+    .item h3{margin:0 0 8px 0;font-size:16px}
+    a.btn{display:inline-block;padding:8px 10px;border:1px solid #2a2f45;border-radius:10px;color:#fff;text-decoration:none}
+    .article h1{margin-top:0}
+    .breadcrumbs a{color:var(--muted);text-decoration:none}
+    .breadcrumbs{margin-bottom:10px}
+    .empty{padding:28px;text-align:center;color:var(--muted)}
+    code.k{background:#10131d;border:1px solid #1e2336;border-radius:8px;padding:2px 6px}
   </style>
 </head>
 <body>
-  <header><h1>База знаний</h1></header>
-  <main id="view"></main>
-  <footer class="tabs">
-    <button class="active" data-tab="info"><span>⌚</span>Общая информация</button>
-    <button data-tab="brands"><span>🏷️</span>Бренды</button>
-    <button data-tab="articles"><span>📰</span>Статьи</button>
-  </footer>
-  <script>
-    const view = document.getElementById('view');
-    const tabs = document.querySelectorAll('footer.tabs button');
-    tabs.forEach(b=>b.addEventListener('click',()=>{showTab(b.dataset.tab);}));
+  <header>
+    <h1>WatchApp</h1>
+    <nav>
+      <a href="#/cats" data-link>Категории</a>
+      <a href="#/articles" data-link>Статьи</a>
+    </nav>
+    <div class="muted" style="margin-left:auto">Mini App</div>
+  </header>
 
-    const infoData = {
-      base:{title:'Базовый',topics:[
-        {t:'Типы часов',d:'Механические, кварцевые и электронные.'},
-        {t:'Особенности',d:'Основы конструкции и ухода.'}
-      ]},
-      advanced:{title:'Продвинутый',topics:[
-        {t:'Дополнительные функции',d:'Хронограф, GMT и другие.'},
-        {t:'Материалы',d:'Титан, керамика, сапфир.'}
-      ]},
-      pro:{title:'Профи',topics:[
-        {t:'Высокие компликации',d:'Турбийон, вечный календарь.'},
-        {t:'Сертификация',d:'COSC, Geneva Seal и др.'}
-      ]}
+  <main id="app"><div class="card">Загрузка…</div></main>
+
+  <script>
+    // === НАСТРОЙКИ ===
+    // Поставь базовый URL своего n8n (Production URL Webhook)
+    const BASE_API = "https://n-8-n.tech/webhook"; // например: https://n8n.example.com
+    const API = {
+      cats:     () => BASE_API + '/kb/categories',
+      list:     () => BASE_API + '/kb/articles',
+      article:  (id) => BASE_API + '/kb/article?id=' + encodeURIComponent(id),
     };
 
-    function showTab(tab){
-      tabs.forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
-      if(tab==='info') renderInfoHome();
-      if(tab==='brands') renderBrands();
-      if(tab==='articles') renderArticles();
-    }
+    // Telegram initData (если Mini App)
+    const initData = (typeof Telegram !== 'undefined' && Telegram.WebApp && Telegram.WebApp.initData) ? Telegram.WebApp.initData : '';
+    if (typeof Telegram !== 'undefined' && Telegram.WebApp && Telegram.WebApp.ready) Telegram.WebApp.ready();
 
-    function renderInfoHome(){
-      view.innerHTML='';
-      const wrap=document.createElement('div');wrap.className='level-select';
-      Object.keys(infoData).forEach(k=>{
-        const btn=document.createElement('button');
-        btn.textContent=infoData[k].title;
-        btn.onclick=()=>renderLevel(k);
-        wrap.appendChild(btn);
+    async function fetchJSON(url){
+      const res = await fetch(url, {
+        headers: initData ? {'X-Init-Data': initData} : {}
       });
-      view.appendChild(wrap);
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      return await res.json();
     }
 
-    function renderLevel(k){
-      const lvl=infoData[k];
-      view.innerHTML='';
-      const back=document.createElement('button');back.className='back';back.textContent='← Назад';back.onclick=renderInfoHome;
-      const h=document.createElement('h2');h.textContent=lvl.title;
-      const ul=document.createElement('ul');ul.className='topics';
-      lvl.topics.forEach(t=>{
-        const li=document.createElement('li');
-        li.innerHTML='<strong>'+t.t+'</strong><br><span class="muted">'+t.d+'</span>';
-        ul.appendChild(li);
+    // === Рендеры ===
+    const el = (sel, root=document)=>root.querySelector(sel);
+
+    function renderCats(tree){
+      const rec = (nodes) => {
+        const ul = document.createElement('ul'); ul.className='tree';
+        nodes.forEach(n=>{
+          const li = document.createElement('li');
+          const link = document.createElement('a');
+          link.href = '#/articles?cat=' + encodeURIComponent(n.id);
+          link.textContent = n.title;
+          li.appendChild(link);
+          if (n.children && n.children.length) li.appendChild(rec(n.children));
+          ul.appendChild(li);
+        });
+        return ul;
+      };
+      const box = document.createElement('div');
+      box.className='card';
+      box.innerHTML = '<h2>Категории</h2><p class="muted">Нажми на категорию, чтобы увидеть статьи.</p>';
+      box.appendChild(rec(tree));
+      return box;
+    }
+
+    function renderArticleList(list, params){
+      const wrap = document.createElement('div'); wrap.className='list';
+      const cat = params.get('cat');
+      const filtered = cat ? list.filter(a => a.category_id === cat) : list;
+      if (!filtered.length) {
+        const empty = document.createElement('div');
+        empty.className = 'card empty';
+        empty.textContent = 'Пока пусто.';
+        return empty;
+      }
+      filtered.forEach(a=>{
+        const card = document.createElement('div'); card.className='item';
+        card.innerHTML = `
+          <h3>${a.title}</h3>
+          <p class="muted">${a.summary ? a.summary : '—'}</p>
+          <a class="btn" href="#/article/${encodeURIComponent(a.id)}">Открыть</a>
+        `;
+        wrap.appendChild(card);
       });
-      view.append(back,h,ul);
+      return wrap;
     }
 
-    function renderBrands(){
-      view.innerHTML='';
-      const list=['Швейцарский','Японский','Немецкий','Китайский','Российский','Фэшн бренд'];
-      const div=document.createElement('div');div.className='brand-list';
-      list.forEach(n=>{const el=document.createElement('div');el.textContent=n;div.appendChild(el);});
-      view.appendChild(div);
+    function renderArticle(a){
+      const box = document.createElement('div'); box.className='card article';
+      const bc = document.createElement('div'); bc.className = 'breadcrumbs';
+      bc.innerHTML = `<a href="#/cats">Категории</a> · <a href="#/articles?cat=${encodeURIComponent(a.category_id)}">Статьи</a>`;
+      const h = document.createElement('h1'); h.textContent = a.title;
+      const body = document.createElement('div');
+      body.innerHTML = a.content_html || '<p class="muted">Пусто. Добавь текст в Supabase.</p>';
+      box.append(bc,h,body);
+      return box;
     }
 
-    function renderArticles(){
-      view.innerHTML='';
-      const list=document.createElement('div');list.className='article-list';
-      const item=document.createElement('div');item.innerHTML='<strong>Техника продаж</strong><br><span class="muted">Основы техники продаж</span>';
-      item.onclick=()=>renderArticle();
-      list.appendChild(item);
-      view.appendChild(list);
+    // === Роутер ===
+    function parseHash(){
+      const [path, q=''] = (location.hash.slice(1) || '/cats').split('?');
+      const parts = path.split('/').filter(Boolean);
+      const params = new URLSearchParams(q);
+      return {parts, params};
     }
 
-    function renderArticle(){
-      view.innerHTML='';
-      const back=document.createElement('button');back.className='back';back.textContent='← Назад';back.onclick=()=>showTab('articles');
-      const box=document.createElement('div');box.className='article';
-      box.innerHTML='<h2>Основы техники продаж</h2><p>Краткое руководство по эффективным продажам часов.</p>';
-      view.append(back,box);
+    async function router(){
+      // active nav
+      document.querySelectorAll('nav a[data-link]').forEach(a=>a.classList.toggle('active', a.getAttribute('href')===location.hash));
+      const app = el('#app'); app.innerHTML='<div class="card">Загрузка…</div>';
+      const {parts, params} = parseHash();
+
+      try{
+        if (parts[0]==='cats' || parts[0]===''){
+          const data = await fetchJSON(API.cats());
+          app.innerHTML='';
+          app.appendChild(renderCats(data.tree || []));
+          return;
+        }
+        if (parts[0]==='articles'){
+          const data = await fetchJSON(API.list());
+          app.innerHTML='';
+          const listEl = renderArticleList(data.list || [], params);
+          const head = document.createElement('div'); head.className='card';
+          head.innerHTML = `<h2>Статьи</h2>${params.get('cat') ? `<div class="muted">Фильтр по категории: <code class="k">${params.get('cat')}</code></div>`:''}`;
+          app.appendChild(head);
+          app.appendChild(listEl);
+          return;
+        }
+        if (parts[0]==='article' && parts[1]){
+          const data = await fetchJSON(API.article(decodeURIComponent(parts[1])));
+          app.innerHTML='';
+          app.appendChild(renderArticle(data.article || {}));
+          return;
+        }
+        location.hash = '#/cats';
+      }catch(e){
+        app.innerHTML = `<div class="card">Ошибка загрузки: ${e.message}</div>`;
+      }
     }
 
-    // initial render
-    renderInfoHome();
+    window.addEventListener('hashchange', router);
+    router();
   </script>
 </body>
 </html>
