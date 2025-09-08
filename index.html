@@ -1,41 +1,49 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>WatchApp — база знаний</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>База знаний — WatchApp</title>
   <style>
-    :root{--bg:#0f1116;--card:#151822;--text:#e6e9f0;--muted:#98a2b3;--accent:#7aa2ff;--line:#222837;}
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text);}
-    header{position:fixed;top:0;left:0;right:0;height:56px;background:var(--card);display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--line);z-index:10}
-    header h1{font-size:18px;font-weight:600}
-    main{padding:72px 16px 88px;max-width:960px;margin:0 auto}
-    .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
-    .grid{display:grid;gap:12px}
-    .btn{display:block;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#111523;color:var(--text);text-decoration:none;cursor:pointer}
-    .btn:hover{border-color:#2e364a}
-    .btn-ghost{background:transparent}
-    .title{font-size:22px;font-weight:700;margin-bottom:8px}
+    :root{
+      --bg:#f6f7fb; --card:#ffffff; --text:#0b1220; --muted:#64748b; --accent:#2563eb; --line:#e5e7eb;
+      --btn:#f1f5f9; --btn-border:#e2e8f0;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,Arial;color:var(--text);background:var(--bg)}
+    header{position:fixed;inset:0 0 auto 0;height:56px;background:var(--card);border-bottom:1px solid var(--line);
+      display:flex;align-items:center;gap:8px;padding:0 12px;z-index:10}
+    .back-btn{display:flex;align-items:center;gap:8px;border:1px solid var(--btn-border);background:var(--btn);padding:6px 10px;
+      border-radius:10px;cursor:pointer;font-weight:600;color:var(--text)}
+    .back-btn svg{width:16px;height:16px}
+    header h1{margin:0 auto 0 8px;font-size:18px;font-weight:700}
+    main{max-width:960px;margin:76px auto 88px;padding:0 16px}
+    .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+    .title{font-size:22px;font-weight:800;margin:4px 0 10px}
     .muted{color:var(--muted)}
-    .list{display:flex;flex-direction:column;gap:10px;margin-top:10px}
-    .item{padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#101422;cursor:pointer}
-    .item h4{font-size:16px;margin-bottom:4px}
-    .tabs{position:fixed;bottom:0;left:0;right:0;height:68px;background:var(--card);border-top:1px solid var(--line);display:flex;z-index:10}
-    .tabs button{flex:1;border:none;background:transparent;color:var(--muted);font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer}
-    .tabs button.active{color:var(--accent)}
-    .back{margin-bottom:12px}
-    .article{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
-    .article h1{font-size:22px;margin-bottom:10px}
-    .breadcrumb{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
-    .breadcrumb a{color:var(--accent);text-decoration:none}
-    .empty{color:var(--muted);padding:16px 0}
-    .loading{padding:8px 0;color:var(--muted)}
-    a, .click{color:#8bb3ff}
+    .grid{display:grid;gap:12px}
+    .btn{display:block;padding:12px 14px;border-radius:12px;border:1px solid var(--btn-border);background:var(--btn);color:var(--text);cursor:pointer;text-align:left}
+    .list{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+    .item{padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);cursor:pointer}
+    .item h4{margin:0 0 4px;font-size:16px}
+    .loading,.empty{padding:10px 0;color:var(--muted)}
+    .article{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+    .article h1{margin:0 0 8px;font-size:22px}
+    .tabs{position:fixed;inset:auto 0 0 0;height:68px;background:var(--card);border-top:1px solid var(--line);display:flex;z-index:10}
+    .tabs button{flex:1;border:none;background:transparent;color:var(--muted);font-size:12px;display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;cursor:pointer}
+    .tabs button.active{color:var(--accent);font-weight:600}
+    a,.click{color:#1d4ed8;text-decoration:none}
   </style>
 </head>
 <body>
-  <header><h1>База знаний</h1></header>
+  <header>
+    <button class="back-btn" id="backBtn" title="Назад">
+      <svg viewBox="0 0 20 20" fill="currentColor"><path d="M12.293 16.293a1 1 0 0 0 1.414-1.414L9.414 10l4.293-4.879a1 1 0 1 0-1.414-1.414l-5 5.683a1.5 1.5 0 0 0 0 2.12l5 4.783z"/></svg>
+      Назад
+    </button>
+    <h1>База знаний</h1>
+  </header>
+
   <main id="app"><div class="panel"><div class="loading">Загрузка…</div></div></main>
 
   <footer class="tabs">
@@ -45,213 +53,194 @@
   </footer>
 
   <script>
-    // === API ===
-    const BASE_API = "https://n-8-n.tech/webhook"; // без завершающего слэша!
+    // ===== API =====
+    const BASE_API = "https://n-8-n.tech/webhook"; // прод-URL n8n (без завершающего /)
     const API = {
       cats:    () => `${BASE_API}/kb/categories`,
       list:    (categoryId) => categoryId
                   ? `${BASE_API}/kb/articles?category=${encodeURIComponent(categoryId)}`
                   : `${BASE_API}/kb/articles`,
-      article: (id) => `${BASE_API}/kb/article?id=${encodeURIComponent(id)}`,
+      article: (id) => `${BASE_API}/kb/article?id=${encodeURIComponent(id)}`
     };
 
-    // === Telegram initData (если есть) ===
-    function getInitData() {
-      try {
-        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
-          return window.Telegram.WebApp.initData;
-        }
-      } catch (_) {}
-      return "";
+    // ===== Telegram initData (если открыто как WebApp) =====
+    function getInitData(){
+      try{
+        return (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) ? Telegram.WebApp.initData : "";
+      }catch(_){return ""}
     }
-    async function apiGet(url) {
+    async function apiGet(url){
       const headers = {};
       const initData = getInitData();
       if (initData) headers["X-Init-Data"] = initData;
-      const res = await fetch(url, { headers });
+      const res = await fetch(url,{headers});
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json().catch(async () => {
-        // если вдруг пришёл не JSON (например, текст) — попробуем как текст
-        const t = await res.text();
-        try { return JSON.parse(t); } catch { return t; }
-      });
+      // пробуем как JSON, иначе вернём текст
+      try { return await res.json(); } catch { return await res.text(); }
     }
 
-    // === состояние ===
-    const state = {
-      tab: "info",
-      tree: null,
-      nodes: {
-        general: null,
-        brands: null,
-        levels: {} // basic/advanced/pro
-      },
-      stack: [] // для "назад"
-    };
-
-    // === helpers ===
+    // ===== состояние / история =====
     const app = document.getElementById("app");
+    const backBtn = document.getElementById("backBtn");
+    const nav = []; // наш собственный стек
+    const state = { tab:"info", tree:null, nodes:{ general:null, brands:null, levels:{} } };
+    function push(view){ nav.push(view); render(view); }
+    function back(){ nav.pop(); const v = nav[nav.length-1] || {type:"home",tab:state.tab}; render(v); }
+    backBtn.onclick = () => back();
+
+    // ===== утилиты =====
     function h(tag, attrs={}, ...children){
       const el = document.createElement(tag);
-      Object.entries(attrs).forEach(([k,v])=>{
-        if (k === "class") el.className = v;
+      for(const [k,v] of Object.entries(attrs||{})){
+        if (k==="class") el.className=v;
         else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
-        else el.setAttribute(k, v);
-      });
-      children.flat().forEach(c => {
-        if (typeof c === "string") el.appendChild(document.createTextNode(c));
-        else if (c) el.appendChild(c);
-      });
+        else el.setAttribute(k,v);
+      }
+      for (const c of children.flat()){
+        el.appendChild(typeof c==="string" ? document.createTextNode(c) : (c||document.createTextNode("")));
+      }
       return el;
     }
-    function clear(){ app.innerHTML = ""; }
+    function clear(){ app.innerHTML=""; }
     function setTab(tab){
       state.tab = tab;
-      document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
-      if (tab === "info") renderInfoHome();
-      if (tab === "brands") renderBrandsHome();
-      if (tab === "articles") renderArticlesHome();
+      document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab===tab));
+      nav.length = 0;
+      push({type:"home",tab});
     }
-    document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => setTab(b.dataset.tab));
 
-    // === загрузка дерева категорий ===
-    async function loadTree() {
-      const data = await apiGet(API.cats());
-      const tree = Array.isArray(data) ? data : (data.tree || []);
+    // ===== загрузка дерева =====
+    async function loadTree(){
+      const raw = await apiGet(API.cats());
+      const tree = Array.isArray(raw) ? raw : (raw.tree || []);
       state.tree = tree;
 
-      // находим узлы "Общая информация" и "Бренды"
-      const byId = id => tree.find(n => n.id === id);
+      // найдём корни "Общая информация" и "Бренды"
+      const byId = id => tree.find(n => n.id===id);
       const byTitle = t => tree.find(n => (n.title||"").toLowerCase().includes(t));
-      state.nodes.general = byId("general") || byTitle("общая информация");
+      state.nodes.general = byId("general") || byTitle("общ");
       state.nodes.brands  = byId("brands")  || byTitle("бренд");
-      if (state.nodes.general) {
+
+      if (state.nodes.general){
         const kids = state.nodes.general.children || [];
-        state.nodes.levels.basic    = kids.find(n => n.id === "basic")    || kids.find(n => /базов/i.test(n.title||""));
-        state.nodes.levels.advanced = kids.find(n => n.id === "advanced") || kids.find(n => /продвинут/i.test(n.title||""));
-        state.nodes.levels.pro      = kids.find(n => n.id === "pro")      || kids.find(n => /проф/i.test(n.title||""));
+        state.nodes.levels.basic    = kids.find(n => n.id==="basic")    || kids.find(n => /базов/i.test(n.title||""));
+        state.nodes.levels.advanced = kids.find(n => n.id==="advanced") || kids.find(n => /продвинут/i.test(n.title||""));
+        state.nodes.levels.pro      = kids.find(n => n.id==="pro")      || kids.find(n => /проф/i.test(n.title||""));
       }
     }
 
-    // === РЕНДЕРЫ ===
+    // ===== рендеры =====
+    function render(view){
+      clear();
+      const hasBack = !(view.type==="home");
+      backBtn.style.visibility = hasBack ? "visible" : "hidden";
+
+      if (view.type==="home"){
+        if (view.tab==="info") renderInfoHome();
+        if (view.tab==="brands") renderBrandsHome();
+        if (view.tab==="articles") renderArticlesHome();
+        return;
+      }
+      if (view.type==="level") renderLevel(view.levelKey);
+      if (view.type==="category") renderCategory(view.category);
+      if (view.type==="articles") renderArticlesForCategory(view.categoryId, view.title);
+      if (view.type==="article") openArticle(view.id);
+    }
+
     function renderInfoHome(){
-      clear();
       const g = state.nodes.general;
-      if (!g) return app.appendChild(h("div",{class:"panel"}, h("div",{class:"empty"},"Нет раздела «Общая информация»")));
-      app.appendChild(
-        h("div",{class:"panel"},
-          h("div",{class:"title"},"Общая информация"),
-          h("div",{class:"grid"},
-            h("button",{class:"btn",onclick:()=>renderLevel('basic')}, "Базовый"),
-            h("button",{class:"btn",onclick:()=>renderLevel('advanced')}, "Продвинутый"),
-            h("button",{class:"btn",onclick:()=>renderLevel('pro')}, "Профи"),
-          ),
+      const panel = h("div",{class:"panel"},
+        h("div",{class:"title"},"Общая информация"),
+        h("div",{class:"grid"},
+          h("button",{class:"btn",onclick:()=>push({type:"level",levelKey:"basic"})},"Базовый"),
+          h("button",{class:"btn",onclick:()=>push({type:"level",levelKey:"advanced"})},"Продвинутый"),
+          h("button",{class:"btn",onclick:()=>push({type:"level",levelKey:"pro"})},"Профи"),
         )
       );
+      app.appendChild(panel);
     }
 
-    function renderLevel(key){
-      const levelNode = state.nodes.levels[key];
-      clear();
-      const back = h("button",{class:"btn btn-ghost back",onclick:()=>renderInfoHome()},"← Назад");
-      const title = h("div",{class:"title"}, levelNode?.title || "Раздел");
-      const topics = (levelNode?.children || []);
-      const list = h("div",{class:"list"},
-        topics.map(cat =>
-          h("div",{class:"item",onclick:()=>renderTopic(cat)}, h("h4",{},cat.title), h("div",{class:"muted"},"Открыть темы и статьи"))
-        )
-      );
-      app.appendChild(h("div",{class:"panel"}, back, title, list));
-    }
-
-    async function renderTopic(cat){
-      clear();
-      app.appendChild(h("div",{class:"panel"}, h("button",{class:"btn btn-ghost back",onclick:()=>renderLevelFromChild(cat)}, "← Назад"),
-        h("div",{class:"title"},cat.title),
-        h("div",{class:"loading"},"Загружаем статьи…")
+    function renderLevel(levelKey){
+      const node = state.nodes.levels[levelKey];
+      const title = node?.title || "Раздел";
+      const children = node?.children || [];
+      const list = children.map(cat => h("div",{class:"item",onclick:()=>push({type:"category",category:cat})},
+        h("h4",{},cat.title), h("div",{class:"muted"},"Открыть")
       ));
-      try{
-        const data = await apiGet(API.list(cat.id));
-        const items = Array.isArray(data) ? data : (data.items || []);
-        const list = items.length
-          ? h("div",{class:"list"}, items.map(a =>
-               h("div",{class:"item",onclick:()=>openArticle(a.id)},
-                 h("h4",{},a.title || "Без заголовка"),
-                 a.summary ? h("div",{class:"muted"},a.summary) : null
-               )))
-          : h("div",{class:"empty"},"Статей в этой теме пока нет.");
-        app.querySelector(".panel").lastChild.replaceWith(list);
-      }catch(e){
-        app.querySelector(".panel").lastChild.replaceWith(h("div",{class:"empty"},"Ошибка загрузки статей"));
-      }
+      app.appendChild(h("div",{class:"panel"}, h("div",{class:"title"},title), h("div",{class:"list"}, list.length?list:h("div",{class:"empty"},"Пока нет тем."))));
     }
-    function renderLevelFromChild(cat){
-      // возвращаемся к уровню, у которого этот cat является дочерним
-      const keys = ["basic","advanced","pro"];
-      const key = keys.find(k => (state.nodes.levels[k]?.children||[]).some(c=>c.id===cat.id));
-      if (key) renderLevel(key); else renderInfoHome();
+
+    // Категория может иметь подкатегории. Если есть — показываем их; если нет — сразу статьи.
+    function renderCategory(cat){
+      const kids = cat.children || [];
+      if (kids.length){
+        const list = kids.map(c => h("div",{class:"item",onclick:()=>push({type:"articles",categoryId:c.id,title:c.title})},
+          h("h4",{},c.title), h("div",{class:"muted"},"Показать статьи")
+        ));
+        app.appendChild(h("div",{class:"panel"}, h("div",{class:"title"},cat.title), h("div",{class:"list"},list)));
+      } else {
+        push({type:"articles",categoryId:cat.id,title:cat.title});
+      }
     }
 
     function renderBrandsHome(){
-      clear();
       const b = state.nodes.brands;
-      if (!b) return app.appendChild(h("div",{class:"panel"}, h("div",{class:"empty"},"Нет раздела «Бренды»")));
-      const list = (b.children||[]).map(cat =>
-        h("div",{class:"item",onclick:()=>renderTopic(cat)},
-          h("h4",{}, cat.title)
-        )
-      );
-      app.appendChild(h("div",{class:"panel"}, h("div",{class:"title"},"Бренды"), h("div",{class:"list"}, list)));
+      const kids = b?.children || [];
+      const list = kids.map(cat => h("div",{class:"item",onclick:()=>push({type:"articles",categoryId:cat.id,title:cat.title})},
+        h("h4",{},cat.title)
+      ));
+      app.appendChild(h("div",{class:"panel"}, h("div",{class:"title"},"Бренды"), h("div",{class:"list"}, list.length?list:h("div",{class:"empty"},"Пока нет разделов брендов."))));
     }
 
     async function renderArticlesHome(){
-      clear();
-      app.appendChild(h("div",{class:"panel"},
-        h("div",{class:"title"},"Все статьи"),
-        h("div",{class:"loading"},"Загружаем…")
-      ));
+      const box = h("div",{class:"panel"}, h("div",{class:"title"},"Все статьи"), h("div",{class:"loading"},"Загружаем…"));
+      app.appendChild(box);
       try{
-        const data = await apiGet(API.list()); // без категории = все опубликованные
-        const items = Array.isArray(data) ? data : (data.items || []);
+        const data = await apiGet(API.list());
+        const items = Array.isArray(data)?data:(data.items||[]);
+        if (items.length===1){ push({type:"article",id:items[0].id}); return; }
         const list = items.length
-          ? h("div",{class:"list"}, items.map(a =>
-               h("div",{class:"item",onclick:()=>openArticle(a.id)},
-                 h("h4",{},a.title || "Без заголовка"),
-                 a.summary ? h("div",{class:"muted"},a.summary) : null
-               )))
+          ? h("div",{class:"list"}, items.map(a => h("div",{class:"item",onclick:()=>push({type:"article",id:a.id})},
+                h("h4",{},a.title||"Без названия"), a.summary?h("div",{class:"muted"},a.summary):null )))
           : h("div",{class:"empty"},"Пока нет статей.");
-        app.querySelector(".panel").lastChild.replaceWith(list);
-      }catch(e){
-        app.querySelector(".panel").lastChild.replaceWith(h("div",{class:"empty"},"Ошибка загрузки."));
-      }
+        box.lastChild.replaceWith(list);
+      }catch{ box.lastChild.replaceWith(h("div",{class:"empty"},"Ошибка загрузки.")); }
+    }
+
+    async function renderArticlesForCategory(categoryId, title){
+      const box = h("div",{class:"panel"}, h("div",{class:"title"}, title||"Статьи"), h("div",{class:"loading"},"Загружаем…"));
+      app.appendChild(box);
+      try{
+        const data = await apiGet(API.list(categoryId));
+        const items = Array.isArray(data)?data:(data.items||[]);
+        if (items.length===1){ push({type:"article",id:items[0].id}); return; }
+        const list = items.length
+          ? h("div",{class:"list"}, items.map(a => h("div",{class:"item",onclick:()=>push({type:"article",id:a.id})},
+                h("h4",{},a.title||"Без названия"), a.summary?h("div",{class:"muted"},a.summary):null )))
+          : h("div",{class:"empty"},"Статей в этой теме пока нет.");
+        box.lastChild.replaceWith(list);
+      }catch{ box.lastChild.replaceWith(h("div",{class:"empty"},"Ошибка загрузки статей.")); }
     }
 
     async function openArticle(id){
-      clear();
-      app.appendChild(h("div",{class:"panel"},
-        h("button",{class:"btn btn-ghost back",onclick:()=>window.history.back()},"← Назад"),
-        h("div",{class:"loading"},"Открываем статью…")
-      ));
+      const box = h("div",{class:"panel"}, h("div",{class:"loading"},"Открываем статью…"));
+      app.appendChild(box);
       try{
         const data = await apiGet(API.article(id));
-        const article = data.article || (Array.isArray(data) ? data[0] : data);
-        const box = h("div",{class:"article"});
-        box.innerHTML = `<h1>${escapeHtml(article?.title || "Статья")}</h1>` + (article?.content_html || "<p class='muted'>Пусто</p>");
-        app.querySelector(".panel").lastChild.replaceWith(box);
-      }catch(e){
-        app.querySelector(".panel").lastChild.replaceWith(h("div",{class:"empty"},"Не удалось загрузить статью."));
-      }
+        const a = data.article || (Array.isArray(data)?data[0]:data);
+        const art = h("div",{class:"article"});
+        art.innerHTML = `<h1>${escapeHtml(a?.title||"Статья")}</h1>` + (a?.content_html||"<p class='muted'>Пусто</p>");
+        box.lastChild.replaceWith(art);
+      }catch{ box.lastChild.replaceWith(h("div",{class:"empty"},"Не удалось загрузить статью.")); }
     }
-    function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c])); }
+
+    function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));}
 
     // запуск
     (async()=>{
-      try{
-        await loadTree();
-      }catch(e){
-        app.innerHTML = `<div class="panel"><div class="empty">Не удалось получить структуру. Откройте позже.</div></div>`;
-        return;
-      }
+      try{ await loadTree(); }catch{ app.innerHTML=`<div class="panel"><div class="empty">Не удалось получить структуру.</div></div>`; return; }
+      // вкладки
+      document.querySelectorAll(".tabs button").forEach(b => b.onclick = ()=>setTab(b.dataset.tab));
       setTab("info");
     })();
   </script>
